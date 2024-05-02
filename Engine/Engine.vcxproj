@@ -136,13 +136,21 @@
   <ItemGroup>
     <ClCompile Include="Compile\glad.c" />
     <ClCompile Include="Compile\stb.cpp" />
+    <ClCompile Include="Source\Graphics\mesh.cpp" />
+    <ClCompile Include="Source\Graphics\model.cpp" />
     <ClCompile Include="Source\Graphics\renderer.cpp" />
+    <ClCompile Include="Source\Graphics\shader.cpp" />
     <ClCompile Include="Source\main.cpp" />
     <ClCompile Include="Source\Scene\scene.cpp" />
+    <ClCompile Include="Source\Scene\sceneobject.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Source\Graphics\mesh.h" />
+    <ClInclude Include="Source\Graphics\model.h" />
     <ClInclude Include="Source\Graphics\renderer.h" />
+    <ClInclude Include="Source\Graphics\shader.h" />
     <ClInclude Include="Source\Scene\scene.h" />
+    <ClInclude Include="Source\Scene\sceneobject.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
