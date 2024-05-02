@@ -42,7 +42,6 @@ void initWindow(appInstance app, const char* title, int width, int height, bool 
 int main(int argc, char* argv[]) {
 	initWindow(gApp, "Game", 1280, 720, true);
 
-
     bool running = true;
     while (running) {
         SDL_Event event;
@@ -53,6 +52,8 @@ int main(int argc, char* argv[]) {
                 break;
             }
         }
+
+        SDL_GL_SwapWindow(gApp.m_window);
     }
 
     return 0;
