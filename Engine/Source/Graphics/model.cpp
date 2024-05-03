@@ -50,6 +50,15 @@ Mesh processMesh(aiMesh* mesh, const aiScene* scene) {
         vertex.position.y = mesh->mVertices[i].y;
         vertex.position.z = mesh->mVertices[i].z;
 
+        // Texture Coordinates
+        if (mesh->mTextureCoords[0]) {
+            vertex.texCoords.x = mesh->mTextureCoords[0][i].x;
+            vertex.texCoords.y = mesh->mTextureCoords[0][i].y;
+        }
+        else {
+            vertex.texCoords = glm::vec2(0.0f, 0.0f);
+        }
+
         vertices.push_back(vertex);
     }
 

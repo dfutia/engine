@@ -60,7 +60,8 @@ int main(int argc, char* argv[]) {
 	initWindow(gApp, "Game", 1280, 720, true);
 
     Model model = loadModel("Assets/Meshes/cube.obj");
-    ShaderProgram shader = loadShaderProgram("Assets/Shaders/basic.vert", "Assets/Shaders/basic.frag");
+    ShaderProgram solidColorShader = loadShaderProgram("Assets/Shaders/solidcolor.vert", "Assets/Shaders/solidcolor.frag");
+    ShaderProgram textureShader = loadShaderProgram("Assets/Shaders/texture.vert", "Assets/Shaders/texture.frag");
 
     Scene scene;
     Camera camera;
@@ -101,9 +102,9 @@ int main(int argc, char* argv[]) {
         glm::mat4 view = camera.getViewMatrix();  // Get the dynamic view matrix from the camera
         glm::mat4 projection = glm::perspective(glm::radians(70.0f), (float)1280 / (float)720, 0.1f, 500.0f);  // Perspective projection matrix
 
-        shader.use();
-        shader.setUniform("projection", projection);
-        shader.setUniform("view", view);
+        textureShader.use();
+        textureShader.setUniform("projection", projection);
+        textureShader.setUniform("view", view);
 
         // Render objects in the scene
         for (SceneObject& object : scene.objects) {
@@ -118,8 +119,14 @@ int main(int argc, char* argv[]) {
                 glm::rotate(glm::mat4(1.0f), glm::radians(rotation.y), glm::vec3(0, 1, 0)) *
                 glm::rotate(glm::mat4(1.0f), glm::radians(rotation.z), glm::vec3(0, 0, 1)) *
                 glm::scale(glm::mat4(1.0f), scale);
-            shader.setUniform("model", model);
+            textureShader.setUniform("model", model);
 
+            // Bind Texture
+            //glActiveTexture(GL_TEXTURE0);
+            //glBindTexture(GL_TEXTURE_2D, 0);
+            //textureShader.setUniformInt("ourTexture", 0);
+
+            // Bind Mesh
             for (Mesh& mesh : object.model.meshes) {
                 glBindVertexArray(mesh.vao);
                 glDrawElements(GL_TRIANGLES, mesh.indices.size(), GL_UNSIGNED_INT, 0);
