@@ -74,8 +74,13 @@ int main(int argc, char* argv[]) {
 
     scene.objects.push_back(player);
 
+    Uint32 lastTime = SDL_GetTicks(), currentTime;
+
     bool running = true;
     while (running) {
+        currentTime = SDL_GetTicks();
+        float deltaTime = (currentTime - lastTime) / 1000.0f; // Time in seconds
+
         SDL_Event event;
         while (SDL_PollEvent(&event)) {
             getFrameEvents().push_back(event);
@@ -86,17 +91,15 @@ int main(int argc, char* argv[]) {
             }
         }
 
-        camera.handleEvent(getFrameEvents());
+        camera.handleEvent(getFrameEvents(), deltaTime);
 
         glEnable(GL_DEPTH_TEST);
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glViewport(0, 0, 1280, 720);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        glm::mat4 view = glm::mat4(1.0f);
-        glm::mat4 projection = glm::mat4(1.0f);
-        projection = glm::perspective(glm::radians(70.0f), (float)1280 / (float)720, 0.1f, 500.0f);
-        view = glm::translate(view, glm::vec3(0.0f, 0.0f, -5.0f));
+        glm::mat4 view = camera.getViewMatrix();  // Get the dynamic view matrix from the camera
+        glm::mat4 projection = glm::perspective(glm::radians(70.0f), (float)1280 / (float)720, 0.1f, 500.0f);  // Perspective projection matrix
 
         shader.use();
         shader.setUniform("projection", projection);
@@ -124,8 +127,9 @@ int main(int argc, char* argv[]) {
             }
         }
 
-        SDL_GL_SwapWindow(gApp.m_window);
+        lastTime = currentTime;
         getFrameEvents().clear();
+        SDL_GL_SwapWindow(gApp.m_window);
     }
 
     shutdown(gApp);
