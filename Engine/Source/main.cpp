@@ -44,6 +44,11 @@ void initWindow(appInstance& app, const char* title, int width, int height, bool
     }
 }
 
+std::vector<SDL_Event>& getFrameEvents() {
+    static std::vector<SDL_Event> frameEvents;
+    return frameEvents;
+}
+
 int main(int argc, char* argv[]) {
 	initWindow(gApp, "Game", 1280, 720, true);
 
@@ -68,6 +73,9 @@ int main(int argc, char* argv[]) {
             switch (event.type) {
             case SDL_QUIT:
                 running = false;
+                break;
+            default:
+                getFrameEvents().push_back(event);
                 break;
             }
         }
@@ -109,6 +117,7 @@ int main(int argc, char* argv[]) {
         }
 
         SDL_GL_SwapWindow(gApp.m_window);
+        getFrameEvents().clear();
     }
 
     return 0;
