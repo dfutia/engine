@@ -2,6 +2,7 @@
 #include "Graphics/renderer.h"
 #include "Graphics/model.h"
 #include "Graphics/shader.h"
+#include "Graphics/camera.h"
 
 #include <spdlog/spdlog.h>
 
@@ -44,6 +45,12 @@ void initWindow(appInstance& app, const char* title, int width, int height, bool
     }
 }
 
+void shutdown(appInstance& app) {
+    SDL_GL_DeleteContext(app.m_glContext);
+    SDL_DestroyWindow(app.m_window);
+    SDL_Quit();
+}
+
 std::vector<SDL_Event>& getFrameEvents() {
     static std::vector<SDL_Event> frameEvents;
     return frameEvents;
@@ -52,10 +59,11 @@ std::vector<SDL_Event>& getFrameEvents() {
 int main(int argc, char* argv[]) {
 	initWindow(gApp, "Game", 1280, 720, true);
 
-    Scene scene;
-
     Model model = loadModel("Assets/Meshes/cube.obj");
     ShaderProgram shader = loadShaderProgram("Assets/Shaders/basic.vert", "Assets/Shaders/basic.frag");
+
+    Scene scene;
+    Camera camera;
 
     SceneObject player;
     player.name = "Player";
@@ -70,15 +78,15 @@ int main(int argc, char* argv[]) {
     while (running) {
         SDL_Event event;
         while (SDL_PollEvent(&event)) {
+            getFrameEvents().push_back(event);
             switch (event.type) {
             case SDL_QUIT:
                 running = false;
                 break;
-            default:
-                getFrameEvents().push_back(event);
-                break;
             }
         }
+
+        camera.handleEvent(getFrameEvents());
 
         glEnable(GL_DEPTH_TEST);
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
@@ -119,6 +127,8 @@ int main(int argc, char* argv[]) {
         SDL_GL_SwapWindow(gApp.m_window);
         getFrameEvents().clear();
     }
+
+    shutdown(gApp);
 
     return 0;
 }
