@@ -4,11 +4,12 @@
 #include "Graphics/shader.h"
 #include "Graphics/camera.h"
 
-#include <spdlog/spdlog.h>
-
 #include <glad/glad.h>
 #include <SDL.h>
 #include <SDL_opengl.h>
+
+#include <spdlog/spdlog.h>
+#include <stb_image.h>
 
 struct appInstance {
 	SDL_Window* m_window = nullptr;
@@ -59,7 +60,7 @@ std::vector<SDL_Event>& getFrameEvents() {
 int main(int argc, char* argv[]) {
 	initWindow(gApp, "Game", 1280, 720, true);
 
-    Model model = loadModel("Assets/Meshes/cube.obj");
+    Model model = loadModel("Assets/Meshes/uvcube.fbx");
     ShaderProgram solidColorShader = loadShaderProgram("Assets/Shaders/solidcolor.vert", "Assets/Shaders/solidcolor.frag");
     ShaderProgram textureShader = loadShaderProgram("Assets/Shaders/texture.vert", "Assets/Shaders/texture.frag");
 
@@ -76,6 +77,53 @@ int main(int argc, char* argv[]) {
     scene.objects.push_back(player);
 
     Uint32 lastTime = SDL_GetTicks(), currentTime;
+
+    unsigned int texture1, texture2;
+    // Texture #1
+    glGenTextures(1, &texture1);
+    glBindTexture(GL_TEXTURE_2D, texture1);
+
+    // set the texture wrapping parameters
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    // set texture filtering parameters
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    int width, height, nrChannels;
+    unsigned char* data = stbi_load("Assets/Textures/container.jpg", &width, &height, &nrChannels, 0);
+    if (data) {
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+        glGenerateMipmap(GL_TEXTURE_2D);
+    }
+    else {
+        spdlog::error("failed to load texture");
+    }
+    stbi_image_free(data);
+    // Texture #2
+    glGenTextures(1, &texture2);
+    glBindTexture(GL_TEXTURE_2D, texture2);
+
+    // set the texture wrapping parameters
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    // set texture filtering parameters
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    data = stbi_load("Assets/Textures/awesomeface.png", &width, &height, &nrChannels, 0);
+    if (data) {
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+        glGenerateMipmap(GL_TEXTURE_2D);
+    }
+    else {
+        spdlog::error("failed to load texture");
+    }
+    stbi_image_free(data);
+
+    textureShader.use();
+    textureShader.setUniformInt("texture1", 0);
+    textureShader.setUniformInt("texture2", 1);
 
     bool running = true;
     while (running) {
@@ -122,9 +170,10 @@ int main(int argc, char* argv[]) {
             textureShader.setUniform("model", model);
 
             // Bind Texture
-            //glActiveTexture(GL_TEXTURE0);
-            //glBindTexture(GL_TEXTURE_2D, 0);
-            //textureShader.setUniformInt("ourTexture", 0);
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, texture1);
+            glActiveTexture(GL_TEXTURE1);
+            glBindTexture(GL_TEXTURE_2D, texture2);
 
             // Bind Mesh
             for (Mesh& mesh : object.model.meshes) {
