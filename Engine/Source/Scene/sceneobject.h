@@ -13,7 +13,7 @@ struct SceneObject {
     glm::vec3 position;
     glm::vec3 rotation;
     glm::vec3 scale;
-    Model model;
+    std::string model;
 };
 
 void printObject(SceneObject& object);

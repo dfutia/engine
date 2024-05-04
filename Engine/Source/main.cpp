@@ -1,7 +1,8 @@
+#include "Asset/asset.h"
 #include "Scene/scene.h"
-#include "Graphics/renderer.h"
-#include "Graphics/texture.h"
-#include "Graphics/model.h"
+//#include "Graphics/renderer.h"
+//#include "Graphics/texture.h"
+//#include "Graphics/model.h"
 #include "Graphics/shader.h"
 #include "Graphics/camera.h"
 
@@ -11,12 +12,12 @@
 
 #include <spdlog/spdlog.h>
 
-struct appInstance {
+struct App {
 	SDL_Window* m_window = nullptr;
 	SDL_GLContext m_glContext{};
 } gApp;
 
-void initWindow(appInstance& app, const char* title, int width, int height, bool fullscreen) {
+void initWindow(App& app, const char* title, int width, int height, bool fullscreen) {
     if (SDL_Init(SDL_INIT_EVERYTHING) != 0) {
         spdlog::error("SDL Init {}", SDL_GetError());
     }
@@ -46,7 +47,7 @@ void initWindow(appInstance& app, const char* title, int width, int height, bool
     }
 }
 
-void shutdown(appInstance& app) {
+void shutdown(App& app) {
     SDL_GL_DeleteContext(app.m_glContext);
     SDL_DestroyWindow(app.m_window);
     SDL_Quit();
@@ -60,9 +61,12 @@ std::vector<SDL_Event>& getFrameEvents() {
 int main(int argc, char* argv[]) {
 	initWindow(gApp, "Game", 1280, 720, true);
 
-    unsigned int texture1 = loadTexture("Assets/Textures/container.jpg");
-    unsigned int texture2 = loadTexture("Assets/Textures/awesomeface.png");
-    Model model = loadModel("Assets/Meshes/uvcube.fbx");
+    // Perhaps it makes more sense to just have the add function also load the asset
+    addTexture(gAssets, "Assets/Textures/container.jpg", loadTexture("Assets/Textures/container.jpg"));
+    addTexture(gAssets, "Assets/Textures/awesomeface.png", loadTexture("Assets/Textures/awesomeface.png"));
+    addModel(gAssets, "Assets/Meshes/uvcube.fbx", loadModel("Assets/Meshes/uvcube.fbx"));
+    addModel(gAssets, "Assets/Meshes/suzanne.obj", loadModel("Assets/Meshes/suzanne.obj"));
+
     ShaderProgram solidColorShader = loadShaderProgram("Assets/Shaders/solidcolor.vert", "Assets/Shaders/solidcolor.frag");
     ShaderProgram textureShader = loadShaderProgram("Assets/Shaders/texture.vert", "Assets/Shaders/texture.frag");
 
@@ -75,7 +79,7 @@ int main(int argc, char* argv[]) {
 
     SceneObject player;
     player.name = "Player";
-    player.model = model;
+    player.model = "Assets/Meshes/uvcube.fbx";
     player.position = glm::vec3(0.0f, 0.0f, 0.0f);
     player.rotation = glm::vec3(0.0f, 0.0f, 0.0f);
     player.scale = glm::vec3(1.0f, 1.0f, 1.0f);
@@ -130,15 +134,18 @@ int main(int argc, char* argv[]) {
 
             // Bind Texture
             glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, texture1);
+            glBindTexture(GL_TEXTURE_2D, getTexture(gAssets, "Assets/Textures/container.jpg"));
             glActiveTexture(GL_TEXTURE1);
-            glBindTexture(GL_TEXTURE_2D, texture2);
+            glBindTexture(GL_TEXTURE_2D, getTexture(gAssets, "Assets/Textures/awesomeface.png"));
 
             // Bind Mesh
-            for (Mesh& mesh : object.model.meshes) {
-                glBindVertexArray(mesh.vao);
-                glDrawElements(GL_TRIANGLES, mesh.indices.size(), GL_UNSIGNED_INT, 0);
-                glBindVertexArray(0);
+            if (!object.model.empty()) {
+                Model model = getModel(gAssets, object.model);
+                for (Mesh& mesh : model.meshes) {
+                    glBindVertexArray(mesh.vao);
+                    glDrawElements(GL_TRIANGLES, mesh.indices.size(), GL_UNSIGNED_INT, 0);
+                    glBindVertexArray(0);
+                }
             }
         }
 

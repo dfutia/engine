@@ -136,16 +136,19 @@
   <ItemGroup>
     <ClCompile Include="Compile\glad.c" />
     <ClCompile Include="Compile\stb.cpp" />
+    <ClCompile Include="Source\Asset\asset.cpp" />
     <ClCompile Include="Source\Graphics\camera.cpp" />
     <ClCompile Include="Source\Graphics\mesh.cpp" />
     <ClCompile Include="Source\Graphics\model.cpp" />
     <ClCompile Include="Source\Graphics\renderer.cpp" />
     <ClCompile Include="Source\Graphics\shader.cpp" />
+    <ClCompile Include="Source\Graphics\texture.cpp" />
     <ClCompile Include="Source\main.cpp" />
     <ClCompile Include="Source\Scene\scene.cpp" />
     <ClCompile Include="Source\Scene\sceneobject.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Source\Asset\asset.h" />
     <ClInclude Include="Source\Graphics\camera.h" />
     <ClInclude Include="Source\Graphics\mesh.h" />
     <ClInclude Include="Source\Graphics\model.h" />
