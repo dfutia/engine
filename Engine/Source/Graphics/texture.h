@@ -6,10 +6,6 @@
 #include <stb_image.h>
 #include <spdlog/spdlog.h>
 
-struct Texture {
-	unsigned int id;
-};
-
 unsigned int loadTexture(const char* filePath) {
 	unsigned int textureID;
 	glGenTextures(1, &textureID);
