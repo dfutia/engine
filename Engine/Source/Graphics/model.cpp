@@ -52,7 +52,6 @@ Mesh processMesh(aiMesh* mesh, const aiScene* scene) {
 
         // Texture Coordinates
         if (mesh->mTextureCoords[0]) {
-            spdlog::info("TEST");
             vertex.texCoords.x = mesh->mTextureCoords[0][i].x;
             vertex.texCoords.y = mesh->mTextureCoords[0][i].y;
         }
