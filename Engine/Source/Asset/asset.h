@@ -4,21 +4,25 @@
 
 #include "Graphics/model.h"
 #include "Graphics/texture.h"
+#include "Graphics/shader.h"
 
 #include <spdlog/spdlog.h>
 
 #include <map>
 
 struct Assets {
-    std::map<std::string, Model> models;
-    std::map<std::string, TextureId> textures;
+    std::map<size_t, Model> models;
+    std::map<size_t, Texture> textures;
+    std::map<size_t, ShaderProgram> shaders;
 };
 
-void addModel(Assets& assets, const std::string& filePath, Model model);
-Model getModel(Assets& assets, const std::string& filePath);
+size_t generateCombinedHash(const std::string& path1, const std::string& path2);
+size_t generateHash(const std::string& key);
+std::string loadShaderSource(const std::string& filepath);
 
-void addTexture(Assets& assets, const std::string& filePath, TextureId texture);
-TextureId getTexture(Assets& assets, const std::string& filePath);
+ShaderProgram  loadShader(Assets& assets, const std::string& vertexPath, const std::string& fragmentPath);
+Model loadModel(Assets& assets, const std::string& filePath);
+Texture loadTexture(Assets& assets, const char* filePath);
 
 extern Assets gAssets;
 

@@ -14,7 +14,6 @@ struct Model {
 	std::vector<Mesh> meshes;
 };
 
-Model loadModel(const char* filePath);
 void processNode(aiNode* node, const aiScene* scene, Model& model);
 Mesh processMesh(aiMesh* mesh, const aiScene* scene);
 

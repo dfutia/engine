@@ -6,8 +6,6 @@
 #include <stb_image.h>
 #include <spdlog/spdlog.h>
 
-using TextureId = unsigned int;
-
-TextureId loadTexture(const char* filePath);
+using Texture = unsigned int;
 
 #endif 
