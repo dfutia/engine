@@ -33,20 +33,20 @@ ShaderProgram::ShaderProgram() {
 ShaderProgram::~ShaderProgram() {
     spdlog::info("ShaderProgram destroyed");
     glDeleteProgram(id);
-    for (const Shader& shader : shaders) {
-        glDeleteShader(shader.id);
+    for (std::shared_ptr<Shader> shader : shaders) {
+        glDeleteShader(shader->id);
     }
 }
 
-void ShaderProgram::attach(const Shader& shader) {
-    shaders.push_back(shader);
-    glAttachShader(id, shader.id);
+void ShaderProgram::attach(const std::shared_ptr<Shader>& shader) {
+    shaders.push_back(shader); 
+    glAttachShader(id, shader->id);
 }
 
 bool ShaderProgram::link() {
-    for (Shader& shader : shaders) {
-        if (!shader.compile()) {
-            std::cerr << "Shader compilation failed: " << shader.getInfoLog() << std::endl;
+    for (std::shared_ptr<Shader> shader : shaders) {
+        if (!shader->compile()) {
+            std::cerr << "Shader compilation failed: " << shader->getInfoLog() << std::endl;
             return false;
         }
     }

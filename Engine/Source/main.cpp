@@ -47,38 +47,11 @@ void initWindow(App& app, const char* title, int width, int height, bool fullscr
         SDL_Quit();
     }
 }
+
 void shutdown(App& app) {
     SDL_GL_DeleteContext(app.m_glContext);
     SDL_DestroyWindow(app.m_window);
     SDL_Quit();
-}
-void initGame() {
-    //std::string colorVertexSource = loadShaderSource("Assets/Shaders/solidcolor.vert");
-    //std::string colorFragmentSource = loadShaderSource("Assets/Shaders/solidcolor.frag");
-    //std::string textureVertexSource = loadShaderSource("Assets/Shaders/texture.vert");
-    //std::string textureFragmentSource = loadShaderSource("Assets/Shaders/texture.frag");
-
-    //ShaderProgram colorProgram;
-    //Shader colorVertexShader(colorVertexSource, GL_VERTEX_SHADER);
-    //Shader colorFragmentShader(colorFragmentSource, GL_FRAGMENT_SHADER);
-    //colorProgram.attach(colorVertexShader);
-    //colorProgram.attach(colorFragmentShader);
-    //colorProgram.link();
-
-    //ShaderProgram textureProgram;
-    //Shader textureVertexShader(textureVertexSource, GL_VERTEX_SHADER);
-    //Shader textureFragmentShader(textureFragmentSource, GL_FRAGMENT_SHADER);
-    //textureProgram.attach(textureVertexShader);
-    //textureProgram.attach(textureFragmentShader);
-    //textureProgram.link();
-
-    //loadShader(gAssets, "Assets/Shaders/texture.vert", "Assets/Shaders/texture.frag");
-
-    //loadModel(gAssets, "Assets/Meshes/suzanne.obj");
-    //loadModel(gAssets, "Assets/Meshes/uvcube.fbx");
-
-    //loadTexture(gAssets, "Assets/Textures/container.jpg");
-    //loadTexture(gAssets, "Assets/Textures/awesomeface.png");
 }
 
 std::vector<SDL_Event>& getFrameEvents() {
@@ -86,27 +59,30 @@ std::vector<SDL_Event>& getFrameEvents() {
     return frameEvents;
 }
 
+void loadAssets() {
+    loadShader(gAssets, "Assets/Shaders/texture.vert", "Assets/Shaders/texture.frag");
+
+    loadModel(gAssets, "Assets/Meshes/suzanne.obj");
+    loadModel(gAssets, "Assets/Meshes/uvcube.fbx");
+
+    loadTexture(gAssets, "Assets/Textures/container.jpg");
+    loadTexture(gAssets, "Assets/Textures/awesomeface.png");
+}
+
 int main(int argc, char* argv[]) {
 	initWindow(gApp, "Game", 1280, 720, true);
-    //initGame();
-
-    ShaderProgram shader = loadShader(gAssets, "Assets/Shaders/texture.vert", "Assets/Shaders/texture.frag");
-
-    Model model1 = loadModel(gAssets, "Assets/Meshes/suzanne.obj");
-    Model model2 = loadModel(gAssets, "Assets/Meshes/uvcube.fbx");
-
-    Texture texture1 = loadTexture(gAssets, "Assets/Textures/container.jpg");
-    Texture texture2 = loadTexture(gAssets, "Assets/Textures/awesomeface.png");
+    loadAssets();
 
     Scene scene;
 
-    shader.use();
-    shader.setUniformInt("texture1", 0);
-    shader.setUniformInt("texture2", 1);
+    auto program = loadShader(gAssets, "Assets/Shaders/texture.vert", "Assets/Shaders/texture.frag");
+    program->use();
+    program->setUniformInt("texture1", 0);
+    program->setUniformInt("texture2", 1);
 
     SceneObject player;
     player.name = "Player";
-    player.model = model2;
+    player.model = loadModel(gAssets, "Assets/Meshes/uvcube.fbx");
     player.position = glm::vec3(0.0f, 0.0f, 0.0f);
     player.rotation = glm::vec3(0.0f, 0.0f, 0.0f);
     player.scale = glm::vec3(1.0f, 1.0f, 1.0f);
@@ -141,9 +117,9 @@ int main(int argc, char* argv[]) {
         glm::mat4 view = camera.getViewMatrix();  // Get the dynamic view matrix from the camera
         glm::mat4 projection = glm::perspective(glm::radians(70.0f), (float)1280 / (float)720, 0.1f, 500.0f);  // Perspective projection matrix
 
-        shader.use();
-        shader.setUniform("projection", projection);
-        shader.setUniform("view", view);
+        program->use();
+        program->setUniform("projection", projection);
+        program->setUniform("view", view);
 
         // Render objects in the scene
         for (SceneObject& object : scene.objects) {
@@ -159,16 +135,16 @@ int main(int argc, char* argv[]) {
                 glm::rotate(glm::mat4(1.0f), glm::radians(rotation.z), glm::vec3(0, 0, 1)) *
                 glm::scale(glm::mat4(1.0f), scale);
 
-            shader.setUniform("model", model);
+            program->setUniform("model", model);
 
             // Bind Texture
             glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, texture1);
+            glBindTexture(GL_TEXTURE_2D, loadTexture(gAssets, "Assets/Textures/container.jpg"));
             glActiveTexture(GL_TEXTURE1);
-            glBindTexture(GL_TEXTURE_2D, texture2);
-
+            glBindTexture(GL_TEXTURE_2D, loadTexture(gAssets, "Assets/Textures/awesomeface.png"));
+            
             // Bind Mesh
-            for (Mesh& mesh : model2.meshes) {
+            for (Mesh& mesh : object.model->meshes) {
                 glBindVertexArray(mesh.vao);
                 glDrawElements(GL_TRIANGLES, mesh.indices.size(), GL_UNSIGNED_INT, 0);
                 glBindVertexArray(0);

@@ -34,14 +34,12 @@ size_t generateHash(const std::string& key) {
     return hasher(key);
 }
 
-ShaderProgram loadShader(Assets& assets, const std::string& vertexPath, const std::string& fragmentPath) {
+std::shared_ptr<ShaderProgram> loadShader(Assets& assets, const std::string& vertexPath, const std::string& fragmentPath) {
     size_t shaderHash = generateCombinedHash(vertexPath, fragmentPath);
 
-    // Check if the shader program is already loaded
     auto it = assets.shaders.find(shaderHash);
     if (it != assets.shaders.end()) {
-        //spdlog::info("Shader has already been loaded");
-        return it->second; // Return the already loaded shader program
+        return it->second; 
     }
 
     std::string vertexCode;
@@ -63,35 +61,32 @@ ShaderProgram loadShader(Assets& assets, const std::string& vertexPath, const st
         fShaderFile.close();
         vertexCode = vShaderStream.str();
         fragmentCode = fShaderStream.str();
+
+        // Create and compile shaders
+        auto vertexShader = std::make_shared<Shader>(vertexCode, GL_VERTEX_SHADER);
+        auto fragmentShader = std::make_shared<Shader>(fragmentCode, GL_FRAGMENT_SHADER);
+
+        // Link shaders into a program
+        auto program = std::make_shared<ShaderProgram>();
+        program->attach(vertexShader);
+        program->attach(fragmentShader);
+        program->link();
+
+        assets.shaders[shaderHash] = program;
+        return program;
     }
-    catch (std::ifstream::failure& e) {
-        std::cout << "ERROR::SHADER::FILE_NOT_SUCCESSFULLY_READ: " << e.what() << std::endl;
-        return ShaderProgram{}; // Return an empty or default shader program
+    catch (const std::exception& e) {
+        spdlog::error("ERROR::SHADER::FILE_NOT_SUCCESSFULLY_READ: {}", e.what());
+        return nullptr; // Return a nullptr to indicate failure
     }
-
-    // Create and compile shaders
-    Shader vertexShader(vertexCode.c_str(), GL_VERTEX_SHADER);
-    Shader fragmentShader(fragmentCode.c_str(), GL_FRAGMENT_SHADER);
-
-    // Link shaders into a program
-    ShaderProgram program;
-    program.attach(vertexShader);
-    program.attach(fragmentShader);
-    program.link();
-
-    // Store the new shader program in the cache
-    assets.shaders[shaderHash] = program;
-
-    return program;
 }
 
-Model loadModel(Assets& assets, const std::string& filePath) {
+std::shared_ptr<Model> loadModel(Assets& assets, const std::string& filePath) {
     size_t fileHash = generateHash(filePath);
 
     auto it = assets.models.find(fileHash);
     if (it != assets.models.end()) {
-        //spdlog::info("Model has already been loaded");
-        return it->second; 
+        return it->second;
     }
 
     Assimp::Importer importer;
@@ -105,11 +100,10 @@ Model loadModel(Assets& assets, const std::string& filePath) {
         return {};
     }
 
-    Model model;
-    processNode(scene->mRootNode, scene, model);
+    auto model = std::make_shared<Model>();
+    processNode(scene->mRootNode, scene, *model);
 
     assets.models[fileHash] = model;
-
     return model;
 }
 
@@ -118,7 +112,6 @@ Texture loadTexture(Assets& assets, const char* filePath) {
 
     auto it = assets.textures.find(fileHash);
     if (it != assets.textures.end()) {
-        //spdlog::info("Texture has already been loaded");
         return it->second;
     }
 

@@ -30,12 +30,12 @@ struct Shader {
 
 struct ShaderProgram {
     unsigned int id;
-    std::vector<Shader> shaders;
+    std::vector<std::shared_ptr<Shader>> shaders;
 
     ShaderProgram();
     ~ShaderProgram();
 
-    void attach(const Shader& shader);
+    void attach(const std::shared_ptr<Shader>& shader);
 
     bool link();
 

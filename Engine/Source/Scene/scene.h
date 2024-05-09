@@ -10,7 +10,6 @@
 
 struct Scene {
 	std::vector<SceneObject> objects;
-	ShaderProgram sceneShader = loadShader(gAssets, "Assets/Shaders/texture.vert", "Assets/Shaders/texture.frag");
 };
 
 #endif 

@@ -6,6 +6,7 @@
 
 #include <glm/vec3.hpp>
 
+#include <functional>
 #include <string>
 
 struct SceneObject {
@@ -13,7 +14,7 @@ struct SceneObject {
     glm::vec3 position;
     glm::vec3 rotation;
     glm::vec3 scale;
-    Model model;
+    std::shared_ptr<Model> model;
 };
 
 void printObject(SceneObject& object);
