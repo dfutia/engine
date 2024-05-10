@@ -10,12 +10,15 @@
 
 #include <functional>
 #include <map>
+#include <unordered_map>
 
 struct Assets {
-    std::map<size_t, std::shared_ptr<Model>> models;
-    std::map<size_t, Texture> textures;
-    std::map<size_t, std::shared_ptr<ShaderProgram>> shaders;
+    std::unordered_map<size_t, std::shared_ptr<Model>> models;
+    std::unordered_map<size_t, Texture> textures;
+    std::unordered_map<size_t, std::shared_ptr<ShaderProgram>> shaders;
 };
+
+void loadGameAssets();
 
 size_t generateCombinedHash(const std::string& path1, const std::string& path2);
 size_t generateHash(const std::string& key);

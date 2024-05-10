@@ -15,9 +15,6 @@ struct Vertex {
 };
 
 struct Mesh {
-	~Mesh() {
-		spdlog::info("~Mesh()");
-	}
 	unsigned int vao, vbo, ebo;
 	std::vector<Vertex> vertices;
 	std::vector<unsigned int> indices;

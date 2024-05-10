@@ -1,10 +1,6 @@
 #include "Asset/asset.h"
 #include "Scene/scene.h"
-//#include "Graphics/renderer.h"
-//#include "Graphics/texture.h"
-//#include "Graphics/model.h"
-#include "Graphics/shader.h"
-#include "Graphics/camera.h"
+#include "Graphics/renderer.h"
 
 #include <glad/glad.h>
 #include <SDL.h>
@@ -14,9 +10,9 @@
 #include <glm/ext/matrix_clip_space.hpp>
 
 struct App {
-	SDL_Window* m_window = nullptr;
-	SDL_GLContext m_glContext{};
-} gApp;
+    SDL_Window* m_window = nullptr;
+    SDL_GLContext m_glContext{};
+};
 
 void initWindow(App& app, const char* title, int width, int height, bool fullscreen) {
     if (SDL_Init(SDL_INIT_EVERYTHING) != 0) {
@@ -59,36 +55,13 @@ std::vector<SDL_Event>& getFrameEvents() {
     return frameEvents;
 }
 
-void loadAssets() {
-    loadShader(gAssets, "Assets/Shaders/texture.vert", "Assets/Shaders/texture.frag");
-
-    loadModel(gAssets, "Assets/Meshes/suzanne.obj");
-    loadModel(gAssets, "Assets/Meshes/uvcube.fbx");
-
-    loadTexture(gAssets, "Assets/Textures/container.jpg");
-    loadTexture(gAssets, "Assets/Textures/awesomeface.png");
-}
+App g_app;
+Scene g_scene;
 
 int main(int argc, char* argv[]) {
-	initWindow(gApp, "Game", 1280, 720, true);
-    loadAssets();
-
-    Scene scene;
-
-    auto program = loadShader(gAssets, "Assets/Shaders/texture.vert", "Assets/Shaders/texture.frag");
-    program->use();
-    program->setUniformInt("texture1", 0);
-    program->setUniformInt("texture2", 1);
-
-    SceneObject player;
-    player.name = "Player";
-    player.model = loadModel(gAssets, "Assets/Meshes/uvcube.fbx");
-    player.position = glm::vec3(0.0f, 0.0f, 0.0f);
-    player.rotation = glm::vec3(0.0f, 0.0f, 0.0f);
-    player.scale = glm::vec3(1.0f, 1.0f, 1.0f);
-    scene.objects.push_back(player);
-
-    Camera camera;
+	initWindow(g_app, "Game", 1280, 720, true);
+    loadGameAssets();
+    loadScene(g_scene);
 
     Uint32 lastTime = SDL_GetTicks(), currentTime;
 
@@ -107,56 +80,21 @@ int main(int argc, char* argv[]) {
             }
         }
 
-        camera.handleEvent(getFrameEvents(), deltaTime);
+        g_scene.camera->handleEvent(getFrameEvents(), deltaTime);
 
         glEnable(GL_DEPTH_TEST);
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glViewport(0, 0, 1280, 720);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        glm::mat4 view = camera.getViewMatrix();  // Get the dynamic view matrix from the camera
-        glm::mat4 projection = glm::perspective(glm::radians(70.0f), (float)1280 / (float)720, 0.1f, 500.0f);  // Perspective projection matrix
-
-        program->use();
-        program->setUniform("projection", projection);
-        program->setUniform("view", view);
-
-        // Render objects in the scene
-        for (SceneObject& object : scene.objects) {
-            // Local Space
-            glm::vec3 position = object.position;
-            glm::vec3 rotation = object.rotation;
-            glm::vec3 scale = object.scale;
-
-            // World Space
-            glm::mat4 model = glm::translate(glm::mat4(1.0f), position) *
-                glm::rotate(glm::mat4(1.0f), glm::radians(rotation.x), glm::vec3(1, 0, 0)) *
-                glm::rotate(glm::mat4(1.0f), glm::radians(rotation.y), glm::vec3(0, 1, 0)) *
-                glm::rotate(glm::mat4(1.0f), glm::radians(rotation.z), glm::vec3(0, 0, 1)) *
-                glm::scale(glm::mat4(1.0f), scale);
-
-            program->setUniform("model", model);
-
-            // Bind Texture
-            glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, loadTexture(gAssets, "Assets/Textures/container.jpg"));
-            glActiveTexture(GL_TEXTURE1);
-            glBindTexture(GL_TEXTURE_2D, loadTexture(gAssets, "Assets/Textures/awesomeface.png"));
-            
-            // Bind Mesh
-            for (Mesh& mesh : object.model->meshes) {
-                glBindVertexArray(mesh.vao);
-                glDrawElements(GL_TRIANGLES, mesh.indices.size(), GL_UNSIGNED_INT, 0);
-                glBindVertexArray(0);
-            }
-        }
+        renderScene(g_scene);
 
         lastTime = currentTime;
         getFrameEvents().clear();
-        SDL_GL_SwapWindow(gApp.m_window);
+        SDL_GL_SwapWindow(g_app.m_window);
     }
 
-    shutdown(gApp);
+    shutdown(g_app);
 
     return 0;
 }

@@ -1,6 +1,10 @@
 #include "shader.h"
 #include "Asset/asset.h"
 
+#include <iostream>
+#include <fstream>
+#include <sstream>
+
 Shader::Shader(const std::string& source, unsigned int type) {
     id = glCreateShader(type);
     const char* src = source.c_str();
@@ -8,7 +12,6 @@ Shader::Shader(const std::string& source, unsigned int type) {
 }
 
 Shader::~Shader() {
-    spdlog::info("Shader destroyed");
     glDeleteShader(id);
 }
 
@@ -30,8 +33,8 @@ std::string Shader::getInfoLog() const {
 ShaderProgram::ShaderProgram() {
     id = glCreateProgram();
 }
+
 ShaderProgram::~ShaderProgram() {
-    spdlog::info("ShaderProgram destroyed");
     glDeleteProgram(id);
     for (std::shared_ptr<Shader> shader : shaders) {
         glDeleteShader(shader->id);

@@ -4,7 +4,25 @@
 #include <assimp/postprocess.h>
 #include <assimp/Importer.hpp>
 
+#include <iostream>
+#include <fstream>
+#include <sstream>
+
 Assets gAssets;
+
+void loadGameAssets() {
+    auto program = loadShader(gAssets, "Assets/Shaders/texture.vert", "Assets/Shaders/texture.frag");
+    program->use();
+    program->setUniformInt("texture1", 0);
+    program->setUniformInt("texture2", 1);
+
+    loadModel(gAssets, "Assets/Meshes/suzanne.obj");
+    loadModel(gAssets, "Assets/Meshes/uvcube.fbx");
+    loadModel(gAssets, "Assets/Meshes/Maria/Maria J J Ong.dae");
+
+    loadTexture(gAssets, "Assets/Textures/container.jpg");
+    loadTexture(gAssets, "Assets/Textures/awesomeface.png");
+}
 
 std::string loadShaderSource(const std::string& filepath) {
     std::ifstream file(filepath);
@@ -76,7 +94,7 @@ std::shared_ptr<ShaderProgram> loadShader(Assets& assets, const std::string& ver
         return program;
     }
     catch (const std::exception& e) {
-        spdlog::error("ERROR::SHADER::FILE_NOT_SUCCESSFULLY_READ: {}", e.what());
+        //spdlog::error("ERROR::SHADER::FILE_NOT_SUCCESSFULLY_READ: {}", e.what());
         return nullptr; // Return a nullptr to indicate failure
     }
 }
@@ -96,14 +114,17 @@ std::shared_ptr<Model> loadModel(Assets& assets, const std::string& filePath) {
         aiProcess_CalcTangentSpace);
 
     if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) {
-        spdlog::error("ASSIMP: {}", importer.GetErrorString());
+        //spdlog::error("ASSIMP: {}", importer.GetErrorString());
         return {};
     }
 
     auto model = std::make_shared<Model>();
+    model->directory = filePath.substr(0, filePath.find_last_of("/\\"));
+
     processNode(scene->mRootNode, scene, *model);
 
     assets.models[fileHash] = model;
+
     return model;
 }
 
