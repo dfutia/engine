@@ -55,13 +55,13 @@ std::vector<SDL_Event>& getFrameEvents() {
     return frameEvents;
 }
 
-App g_app;
-Scene g_scene;
-
 int main(int argc, char* argv[]) {
-	initWindow(g_app, "Game", 1280, 720, true);
+    App app;
+    Scene scene;
+
+	initWindow(app, "Game", 1280, 720, true);
     loadGameAssets();
-    loadScene(g_scene);
+    loadScene(scene);
 
     Uint32 lastTime = SDL_GetTicks(), currentTime;
 
@@ -80,21 +80,21 @@ int main(int argc, char* argv[]) {
             }
         }
 
-        g_scene.camera->handleEvent(getFrameEvents(), deltaTime);
+        scene.camera->handleEvent(getFrameEvents(), deltaTime);
 
         glEnable(GL_DEPTH_TEST);
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glViewport(0, 0, 1280, 720);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        renderScene(g_scene);
+        renderScene(scene);
 
         lastTime = currentTime;
         getFrameEvents().clear();
-        SDL_GL_SwapWindow(g_app.m_window);
+        SDL_GL_SwapWindow(app.m_window);
     }
 
-    shutdown(g_app);
+    shutdown(app);
 
     return 0;
 }

@@ -17,7 +17,6 @@ struct Scene {
 };
 
 void addObjectToScene(Scene& scene, std::shared_ptr<SceneObject> object);
-
 void loadScene(Scene& scene);
 
 #endif 
