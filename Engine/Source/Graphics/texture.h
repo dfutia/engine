@@ -2,10 +2,11 @@
 #ifndef TEXTURE_H
 #define TEXTURE_H
 
-#include <glad/glad.h>
-#include <stb_image.h>
-#include <spdlog/spdlog.h>
+#include <string>
 
-using Texture = unsigned int;
+struct Texture {
+	unsigned int id;
+	std::string type;
+};
 
 #endif 

@@ -34,11 +34,33 @@ void renderScene(Scene& scene) {
 
         scene.program->setUniform("model", model);
 
-        // Bind Texture
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, loadTexture(gAssets, "Assets/Textures/container.jpg"));
-        glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, loadTexture(gAssets, "Assets/Textures/awesomeface.png"));
+        // Bind Textures
+        unsigned int diffuseNr = 1;
+        unsigned int specularNr = 1;
+        unsigned int normalNr = 1;
+        unsigned int heightNr = 1;
+
+        for (unsigned int i = 0; i < object->model->textures.size(); i++) {
+            glActiveTexture(GL_TEXTURE0 + i);
+            std::string number;
+            std::string name = object->model->textures[i].type;
+
+            if (name == "texture_diffuse") {
+                number = std::to_string(diffuseNr++);
+            }
+            else if (name == "texture_specular") {
+                number = std::to_string(specularNr++);
+            }
+            else if (name == "texture_normal") {
+                number = std::to_string(normalNr++);
+            }
+            else if (name == "texture_height") {
+                number = std::to_string(heightNr++);
+            }
+
+            scene.program->setUniformInt((name + number).c_str(), i);
+            glBindTexture(GL_TEXTURE_2D, object->model->textures[i].id);
+        }
 
         // Bind Mesh
         for (Mesh& mesh : object->model->meshes) {

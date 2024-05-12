@@ -3,6 +3,7 @@
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 #include <assimp/Importer.hpp>
+#include <stb_image.h>
 
 #include <iostream>
 #include <fstream>
@@ -20,8 +21,8 @@ void loadGameAssets() {
     loadModel(gAssets, "Assets/Meshes/uvcube.fbx");
     loadModel(gAssets, "Assets/Meshes/Maria/Maria J J Ong.dae");
 
-    loadTexture(gAssets, "Assets/Textures/container.jpg");
-    loadTexture(gAssets, "Assets/Textures/awesomeface.png");
+    loadTexture(gAssets, "Assets/Textures/container.jpg", "texture_diffuse");
+    loadTexture(gAssets, "Assets/Textures/awesomeface.png", "texture_diffuse");
 }
 
 std::string loadShaderSource(const std::string& filepath) {
@@ -53,9 +54,9 @@ size_t generateHash(const std::string& key) {
 }
 
 std::shared_ptr<ShaderProgram> loadShader(Assets& assets, const std::string& vertexPath, const std::string& fragmentPath) {
-    size_t shaderHash = generateCombinedHash(vertexPath, fragmentPath);
+    Handle handle = generateCombinedHash(vertexPath, fragmentPath);
 
-    auto it = assets.shaders.find(shaderHash);
+    auto it = assets.shaders.find(handle);
     if (it != assets.shaders.end()) {
         return it->second; 
     }
@@ -90,7 +91,7 @@ std::shared_ptr<ShaderProgram> loadShader(Assets& assets, const std::string& ver
         program->attach(fragmentShader);
         program->link();
 
-        assets.shaders[shaderHash] = program;
+        assets.shaders[handle] = program;
         return program;
     }
     catch (const std::exception& e) {
@@ -100,10 +101,13 @@ std::shared_ptr<ShaderProgram> loadShader(Assets& assets, const std::string& ver
 }
 
 std::shared_ptr<Model> loadModel(Assets& assets, const std::string& filePath) {
-    size_t fileHash = generateHash(filePath);
+    spdlog::info("Loading model {}", filePath);
 
-    auto it = assets.models.find(fileHash);
+    Handle handle = generateHash(filePath);
+
+    auto it = assets.models.find(handle);
     if (it != assets.models.end()) {
+        spdlog::warn("Model has already been loaded {}", filePath);
         return it->second;
     }
 
@@ -123,16 +127,21 @@ std::shared_ptr<Model> loadModel(Assets& assets, const std::string& filePath) {
 
     processNode(scene->mRootNode, scene, *model);
 
-    assets.models[fileHash] = model;
+    assets.models[handle] = model;
+
+    spdlog::info("Model loaded");
 
     return model;
 }
 
-Texture loadTexture(Assets& assets, const char* filePath) {
-    size_t fileHash = generateHash(filePath);
+std::shared_ptr<Texture> loadTexture(Assets& assets, const std::string& filePath, const std::string& type) {
+    spdlog::info("Loading texture");
 
-    auto it = assets.textures.find(fileHash);
+    Handle handle = generateHash(filePath);
+
+    auto it = assets.textures.find(handle);
     if (it != assets.textures.end()) {
+        spdlog::warn("Texture has already been loaded: {}", filePath);
         return it->second;
     }
 
@@ -140,7 +149,7 @@ Texture loadTexture(Assets& assets, const char* filePath) {
     glGenTextures(1, &textureID);
     glBindTexture(GL_TEXTURE_2D, textureID);
 
-    // Texture Wrapping Parameters (adjust these as needed)
+    // Texture Wrapping Parameters
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
@@ -149,7 +158,7 @@ Texture loadTexture(Assets& assets, const char* filePath) {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
     int width, height, nrChannels;
-    unsigned char* data = stbi_load(filePath, &width, &height, &nrChannels, 0);
+    unsigned char* data = stbi_load(filePath.c_str(), &width, &height, &nrChannels, 0);
     if (data) {
         GLenum format = GL_RGB;
         if (nrChannels == 1)
@@ -166,10 +175,16 @@ Texture loadTexture(Assets& assets, const char* filePath) {
     else {
         spdlog::error("Failed to load texture from path: {}", filePath);
         stbi_image_free(data); // ensure memory is freed in case of failure
-        // Consider setting textureID to a default texture in case of failure
+        glDeleteTextures(1, &textureID); // Delete the texture if loading failed
+        return nullptr;
     }
 
-    assets.textures[fileHash] = textureID;
+    auto texture = std::make_shared<Texture>();
+    texture->id = textureID;
+    texture->type = type;
+    assets.textures[handle] = texture;
 
-    return textureID;
+    spdlog::info("Texture loaded");
+
+    return texture;
 }

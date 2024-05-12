@@ -75,7 +75,7 @@ std::vector<Texture> loadMaterialTexture(aiMaterial* mat, aiTextureType type, st
         mat->GetTexture(type, i, &path);
         std::string absolutePath = model.directory + "/" + path.C_Str();
         spdlog::info("Loading material texture {}", absolutePath);
-        textures.push_back(loadTexture(gAssets, absolutePath.c_str()));
+        textures.push_back(*loadTexture(gAssets, absolutePath.c_str(), typeName));
     }
 
     return textures;
