@@ -117,6 +117,8 @@ std::shared_ptr<Model> loadModel(Assets& assets, const std::string& filePath) {
         aiProcess_GenSmoothNormals |
         aiProcess_CalcTangentSpace);
 
+    scene->Has
+
     if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) {
         //spdlog::error("ASSIMP: {}", importer.GetErrorString());
         return {};
