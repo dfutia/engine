@@ -21,6 +21,8 @@ void loadGameAssets() {
     loadModel(gAssets, "Assets/Meshes/uvcube.fbx");
     loadModel(gAssets, "Assets/Meshes/Maria/Maria J J Ong.dae");
 
+    loadAnimation(gAssets, "Assets/Animations/Hip Hop Dancing.fbx");
+
     loadTexture(gAssets, "Assets/Textures/container.jpg", "texture_diffuse");
     loadTexture(gAssets, "Assets/Textures/awesomeface.png", "texture_diffuse");
 }
@@ -103,27 +105,30 @@ std::shared_ptr<ShaderProgram> loadShader(Assets& assets, const std::string& ver
 std::shared_ptr<Model> loadModel(Assets& assets, const std::string& filePath) {
     spdlog::info("Loading model {}", filePath);
 
+    // Generate a unique id to identify the asset
     Handle handle = generateHash(filePath);
 
+    // Check if the asset already exist if so return it
     auto it = assets.models.find(handle);
     if (it != assets.models.end()) {
         spdlog::warn("Model has already been loaded {}", filePath);
         return it->second;
     }
 
+    // Import the data
     Assimp::Importer importer;
     const aiScene* scene = importer.ReadFile(filePath,
         aiProcess_Triangulate |
         aiProcess_GenSmoothNormals |
         aiProcess_CalcTangentSpace);
 
-    scene->Has
-
+    // Check if the import failed
     if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) {
-        //spdlog::error("ASSIMP: {}", importer.GetErrorString());
+        spdlog::error("ASSIMP: {}", importer.GetErrorString());
         return {};
     }
 
+    // Create the model
     auto model = std::make_shared<Model>();
     model->directory = filePath.substr(0, filePath.find_last_of("/\\"));
 
@@ -189,4 +194,37 @@ std::shared_ptr<Texture> loadTexture(Assets& assets, const std::string& filePath
     spdlog::info("Texture loaded");
 
     return texture;
+}
+
+std::shared_ptr<AnimationClip> loadAnimation(Assets& assets, const std::string& filePath) {
+    Assimp::Importer importer;
+
+    const aiScene* scene = importer.ReadFile(filePath,
+        aiProcess_CalcTangentSpace |
+        aiProcess_Triangulate |
+        aiProcess_JoinIdenticalVertices |
+        aiProcess_SortByPType);
+
+    if (nullptr == scene) {
+        std::cout << "ASSIMP: " << importer.GetErrorString() << "\n";
+        return nullptr;
+    }
+
+    if (scene->HasAnimations()) {
+        spdlog::info("Has Animations");
+        for (unsigned int i = 0; i < scene->mNumAnimations; i++) {
+            spdlog::info("Name {}", scene->mAnimations[i]->mName.C_Str());
+            spdlog::info("Duration {}", scene->mAnimations[i]->mDuration);
+            spdlog::info("TicksPerSecond {}", scene->mAnimations[i]->mTicksPerSecond);
+
+            const aiAnimation* animation = scene->mAnimations[i];
+            AnimationClip clip = loadAnimationClip(animation);
+            clip.print();
+        }
+    }
+    else {
+        spdlog::info("Does Not Have Animations");
+    }
+
+    return nullptr;
 }
