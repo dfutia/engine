@@ -32,15 +32,38 @@ uniform mat4 boneMatrices[100];
 out vec3 ourColor;
 out vec2 texCoord;
 
-void main() {
-    mat4 boneTransform = boneMatrices[aBoneIndices[0]] * aBoneWeights[0];
-    boneTransform += boneMatrices[aBoneIndices[1]] * aBoneWeights[1];
-    boneTransform += boneMatrices[aBoneIndices[2]] * aBoneWeights[2];
-    boneTransform += boneMatrices[aBoneIndices[3]] * aBoneWeights[3];
+//void main() {
+//    mat4 boneTransform = boneMatrices[aBoneIndices[0]] * aBoneWeights[0];
+//    boneTransform += boneMatrices[aBoneIndices[1]] * aBoneWeights[1];
+//    boneTransform += boneMatrices[aBoneIndices[2]] * aBoneWeights[2];
+//    boneTransform += boneMatrices[aBoneIndices[3]] * aBoneWeights[3];
+//
+//    vec4 transformedPosition = boneTransform * vec4(aPosition, 1.0);
+//    gl_Position = projection * view * model * transformedPosition;
+//
+//    ourColor = aColor;
+//    texCoord = aTexCoord;
+//}
 
-    vec4 transformedPosition = boneTransform * vec4(aPosition, 1.0);
-    gl_Position = projection * view * model * transformedPosition;
+void main() {
+    vec4 position = vec4(aPosition, 1.0);  // Use the original vertex position without bone transformation.
+    gl_Position = projection * view * model * position;
 
     ourColor = aColor;
     texCoord = aTexCoord;
 }
+
+//void main() {
+//    mat4 boneTransform = boneMatrices[aBoneIndices[0]] * aBoneWeights[0];
+//    boneTransform += boneMatrices[aBoneIndices[1]] * aBoneWeights[1];
+//    boneTransform += boneMatrices[aBoneIndices[2]] * aBoneWeights[2];
+//    boneTransform += boneMatrices[aBoneIndices[3]] * aBoneWeights[3];
+//
+//    vec4 transformedPosition = boneTransform * vec4(aPosition, 1.0);
+//    gl_Position = projection * view * model * transformedPosition;
+//
+//    // Coloring based on bone index for debugging
+//    float colorFactor = float(aBoneIndices[0] % 10) / 10.0;
+//    ourColor = vec3(colorFactor, 0.0, 1.0 - colorFactor);
+//    texCoord = aTexCoord;
+//}

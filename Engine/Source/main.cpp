@@ -65,7 +65,7 @@ int main(int argc, char* argv[]) {
 
     spdlog::info("TEST");
     auto myModel = loadModel(gAssets, "Assets/Meshes/Maria/Maria J J Ong.dae");
-    auto myAnim = loadAnimation(gAssets, "Assets/Animations/Hip Hop Dancing.fbx");
+    auto myAnim = loadAnimation(gAssets, "Assets/Animations/Rumba Dancing.fbx");
 
     Uint32 lastTime = SDL_GetTicks(), currentTime;
 
@@ -86,14 +86,14 @@ int main(int argc, char* argv[]) {
 
         scene.camera->handleEvent(getFrameEvents(), deltaTime);
 
-        if (myModel && myAnim) {
-            updateBoneMatrices(myModel->skeleton, *myAnim, currentTime / 1000.0f);
-        }
-
         glEnable(GL_DEPTH_TEST);
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glViewport(0, 0, 1280, 720);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        if (myModel && myAnim) {
+            updateBoneMatrices(myModel->skeleton, *myAnim, currentTime);
+        }
 
         renderScene(scene);
 

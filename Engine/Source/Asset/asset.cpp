@@ -21,7 +21,7 @@ void loadGameAssets() {
     loadModel(gAssets, "Assets/Meshes/uvcube.fbx");
     loadModel(gAssets, "Assets/Meshes/Maria/Maria J J Ong.dae");
 
-    loadAnimation(gAssets, "Assets/Animations/Hip Hop Dancing.fbx");
+    loadAnimation(gAssets, "Assets/Animations/Rumba Dancing.fbx");
 
     loadTexture(gAssets, "Assets/Textures/container.jpg", "texture_diffuse");
     loadTexture(gAssets, "Assets/Textures/awesomeface.png", "texture_diffuse");

@@ -148,6 +148,7 @@
     <ClCompile Include="Source\main.cpp" />
     <ClCompile Include="Source\Scene\scene.cpp" />
     <ClCompile Include="Source\Scene\sceneobject.cpp" />
+    <ClCompile Include="Source\Scene\util.cpp" />
     <ClCompile Include="Source\util.h" />
   </ItemGroup>
   <ItemGroup>

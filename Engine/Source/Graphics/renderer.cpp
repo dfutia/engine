@@ -62,6 +62,10 @@ void renderScene(Scene& scene) {
             glBindTexture(GL_TEXTURE_2D, object->model->textures[i].id);
         }
 
+        for (unsigned int i = 0; i < object->model->skeleton.boneCount; ++i) {
+            scene.program->setUniform("boneMatrices[" + std::to_string(i) + "]", object->model->skeleton.boneMatrices[i]);
+        }
+
         // Bind Mesh
         for (Mesh& mesh : object->model->meshes) {
             glBindVertexArray(mesh.vao);

@@ -2,7 +2,13 @@
 #ifndef BONE_H
 #define BONE_H
 
+#include <util.h>
+
+#include <assimp/scene.h>
+#include <glm/vec3.hpp>
 #include <glm/mat4x4.hpp>
+#include <glm/vec3.hpp>
+#include <glm/gtc/quaternion.hpp>
 
 #include <string>
 #include <vector>
@@ -22,7 +28,6 @@ struct KeyScale {
     float timeStamp;
 };
 
-
 struct Bone {
     std::string name;
     int parentIndex;
@@ -32,32 +37,40 @@ struct Bone {
     std::vector<KeyRotation> rotations;
     std::vector<KeyScale> scales;
 
-    Bone(const std::string& name, int id, const aiNodeAnim* channel)
-        : name(name), parentIndex(id), localTransform(1.0f) {
-        // Load positions
-        for (unsigned int i = 0; i < channel->mNumPositionKeys; ++i) {
-            KeyPosition key;
-            key.position = getGLMVec(channel->mPositionKeys[i].mValue);
-            key.timeStamp = channel->mPositionKeys[i].mTime;
-            positions.push_back(key);
-        }
+    Bone() : parentIndex(-1), localTransform(1.0f) {}
 
-        // Load rotations
-        for (unsigned int i = 0; i < channel->mNumRotationKeys; ++i) {
-            KeyRotation key;
-            key.orientation = getGLMQuat(channel->mRotationKeys[i].mValue);
-            key.timeStamp = channel->mRotationKeys[i].mTime;
-            rotations.push_back(key);
-        }
+    void initialize(const std::string& boneName, int id, const aiNodeAnim* channel) {
+        name = boneName;
+        parentIndex = id;
+        localTransform = glm::mat4(1.0f);
 
-        // Load scales
-        for (unsigned int i = 0; i < channel->mNumScalingKeys; ++i) {
-            KeyScale key;
-            key.scale = getGLMVec(channel->mScalingKeys[i].mValue);
-            key.timeStamp = channel->mScalingKeys[i].mTime;
-            scales.push_back(key);
+        if (channel) {
+            // Load positions
+            for (unsigned int i = 0; i < channel->mNumPositionKeys; ++i) {
+                KeyPosition key;
+                key.position = getGLMVec(channel->mPositionKeys[i].mValue);
+                key.timeStamp = channel->mPositionKeys[i].mTime;
+                positions.push_back(key);
+            }
+
+            // Load rotations
+            for (unsigned int i = 0; i < channel->mNumRotationKeys; ++i) {
+                KeyRotation key;
+                key.orientation = getGLMQuat(channel->mRotationKeys[i].mValue);
+                key.timeStamp = channel->mRotationKeys[i].mTime;
+                rotations.push_back(key);
+            }
+
+            // Load scales
+            for (unsigned int i = 0; i < channel->mNumScalingKeys; ++i) {
+                KeyScale key;
+                key.scale = getGLMVec(channel->mScalingKeys[i].mValue);
+                key.timeStamp = channel->mScalingKeys[i].mTime;
+                scales.push_back(key);
+            }
         }
     }
 };
+
 
 #endif 

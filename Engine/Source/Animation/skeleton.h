@@ -26,8 +26,9 @@ Skeleton createSkeleton(const aiScene* scene);
 
 void updateBoneMatrices(Skeleton& skeleton, const AnimationClip& clip, float timeInSeconds);
 
-glm::vec3 interpolatePosition(float animationTime, const aiNodeAnim* channel);
-glm::quat interpolateRotation(float animationTime, const aiNodeAnim* channel);
-glm::vec3 interpolateScaling(float animationTime, const aiNodeAnim* channel);
+float getScaleFactor(float lastTimeStamp, float nextTimeStamp, float animationTime);
+glm::vec3 interpolatePosition(float animationTime, const Bone& bone);
+glm::quat interpolateRotation(float animationTime, const Bone& bone);
+glm::vec3 interpolateScaling(float animationTime, const Bone& bone);
 
 #endif 
