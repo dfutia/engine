@@ -22,6 +22,7 @@ Mesh processMesh(aiMesh* mesh, const aiScene* scene, Model& model) {
     std::vector<Vertex> vertices;
     std::vector<unsigned int> indices;
 
+    // Process vertices
     for (unsigned int i = 0; i < mesh->mNumVertices; i++) {
         Vertex vertex;
 
@@ -42,10 +43,34 @@ Mesh processMesh(aiMesh* mesh, const aiScene* scene, Model& model) {
         vertices.push_back(vertex);
     }
 
+    // Process indices
     for (unsigned int i = 0; i < mesh->mNumFaces; i++) {
         aiFace face = mesh->mFaces[i];
         for (unsigned int j = 0; j < face.mNumIndices; j++) {
             indices.push_back(face.mIndices[j]);
+        }
+    }
+
+    // Process bones 
+    if (mesh->HasBones()) {
+        for (unsigned int i = 0; i < mesh->mNumBones; i++) {
+            aiBone* bone = mesh->mBones[i];
+            int boneID = i;
+
+            for (unsigned int j = 0; j < bone->mNumWeights; j++) {
+                aiVertexWeight weight = bone->mWeights[j];
+                int vertexID = weight.mVertexId;
+                float boneWeight = weight.mWeight;
+
+                // Find the first empty slot for the joint index and weight
+                for (int k = 0; k < MAX_BONES_PER_VERTEX; k++) {
+                    if (vertices[vertexID].boneWeights[k] == 0.0f) {
+                        vertices[vertexID].boneIndices[k] = boneID;
+                        vertices[vertexID].boneWeights[k] = boneWeight;
+                        break;
+                    }
+                }
+            }
         }
     }
 

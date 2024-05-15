@@ -131,6 +131,7 @@ std::shared_ptr<Model> loadModel(Assets& assets, const std::string& filePath) {
     // Create the model
     auto model = std::make_shared<Model>();
     model->directory = filePath.substr(0, filePath.find_last_of("/\\"));
+    model->skeleton = createSkeleton(scene);
 
     processNode(scene->mRootNode, scene, *model);
 
@@ -197,6 +198,16 @@ std::shared_ptr<Texture> loadTexture(Assets& assets, const std::string& filePath
 }
 
 std::shared_ptr<AnimationClip> loadAnimation(Assets& assets, const std::string& filePath) {
+    // Generate a unique id to identify the asset
+    Handle handle = generateHash(filePath);
+
+    // Check if the asset already exist if so return it
+    auto it = assets.animations.find(handle);
+    if (it != assets.animations.end()) {
+        spdlog::warn("Animation has already been loaded {}", filePath);
+        return it->second;
+    }
+
     Assimp::Importer importer;
 
     const aiScene* scene = importer.ReadFile(filePath,
@@ -218,12 +229,9 @@ std::shared_ptr<AnimationClip> loadAnimation(Assets& assets, const std::string& 
             spdlog::info("TicksPerSecond {}", scene->mAnimations[i]->mTicksPerSecond);
 
             const aiAnimation* animation = scene->mAnimations[i];
-            AnimationClip clip = loadAnimationClip(animation);
-            clip.print();
+            std::shared_ptr<AnimationClip> clip = std::make_shared<AnimationClip>(loadAnimationClip(animation));
+            assets.animations[handle] = clip;
         }
-    }
-    else {
-        spdlog::info("Does Not Have Animations");
     }
 
     return nullptr;

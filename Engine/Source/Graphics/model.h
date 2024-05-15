@@ -4,6 +4,7 @@
 
 #include "Graphics/mesh.h"
 #include "Graphics/texture.h"
+#include "Animation/skeleton.h"
 
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
@@ -17,9 +18,10 @@ struct aiScene;
 struct aiNode;
 
 struct Model {
+	std::string directory;
+	Skeleton skeleton;
 	std::vector<Mesh> meshes;
 	std::vector<Texture> textures;
-	std::string directory;
 };
 
 void processNode(aiNode* node, const aiScene* scene, Model& model);

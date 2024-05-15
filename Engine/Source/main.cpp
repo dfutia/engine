@@ -63,6 +63,10 @@ int main(int argc, char* argv[]) {
     loadGameAssets();
     loadScene(scene);
 
+    spdlog::info("TEST");
+    auto myModel = loadModel(gAssets, "Assets/Meshes/Maria/Maria J J Ong.dae");
+    auto myAnim = loadAnimation(gAssets, "Assets/Animations/Hip Hop Dancing.fbx");
+
     Uint32 lastTime = SDL_GetTicks(), currentTime;
 
     bool running = true;
@@ -81,6 +85,10 @@ int main(int argc, char* argv[]) {
         }
 
         scene.camera->handleEvent(getFrameEvents(), deltaTime);
+
+        if (myModel && myAnim) {
+            updateBoneMatrices(myModel->skeleton, *myAnim, currentTime / 1000.0f);
+        }
 
         glEnable(GL_DEPTH_TEST);
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
