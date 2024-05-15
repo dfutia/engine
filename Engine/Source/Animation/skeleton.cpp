@@ -4,6 +4,8 @@
 
 #include <spdlog/spdlog.h>
 
+#include <iostream>
+
 void Skeleton::print() {
     spdlog::info("Bone Count {}", this->boneCount);
 }
@@ -11,39 +13,62 @@ void Skeleton::print() {
 Skeleton createSkeleton(const aiScene* scene) {
 	Skeleton skeleton;
 
-    // Process all meshes and extract bones
-    for (unsigned int i = 0; i < scene->mNumMeshes; i++) {
+    skeleton.boneCount = scene->mNumMeshes; // or some appropriate count
+    skeleton.bones.resize(skeleton.boneCount);
+    skeleton.boneMatrices.resize(skeleton.boneCount);
+
+    for (unsigned int i = 0; i < scene->mNumMeshes; ++i) {
         aiMesh* mesh = scene->mMeshes[i];
-        for (unsigned int j = 0; j < mesh->mNumBones; j++) {
-            aiBone* bone = mesh->mBones[j];
-            Bone skeletonBone;
-            skeletonBone.name = bone->mName.C_Str();
-            skeletonBone.invBindPose = convertMatrixToGLMFormat(bone->mOffsetMatrix);
+        for (unsigned int j = 0; j < mesh->mNumBones; ++j) {
+            aiBone* ai_bone = mesh->mBones[j];
+            std::string boneName(ai_bone->mName.C_Str());
 
-            // Find or create the parent joint
-            int parentIndex = -1;  // If no parent, set to -1
-            std::string parentName = skeletonBone.name;  // Modify this to find the actual parent name if available
-            auto it = skeleton.boneNameToIndex.find(parentName);
-            if (it != skeleton.boneNameToIndex.end()) {
-                parentIndex = it->second;
+            if (skeleton.boneNameToIndex.find(boneName) == skeleton.boneNameToIndex.end()) {
+                int boneIndex = skeleton.bones.size();
+                skeleton.boneNameToIndex[boneName] = boneIndex;
+                skeleton.bones.emplace_back(Bone(boneName, boneIndex, nullptr)); // Initialize without animation channel
+
+                Bone& bone = skeleton.bones.back();
+                bone.invBindPose = ai_bone->mOffsetMatrix;
+                std::cout << "Skeleton Bone Name: " << bone.name << std::endl;
             }
-
-            skeletonBone.parentIndex = parentIndex;
-            skeleton.bones.push_back(skeletonBone);
-            skeleton.boneNameToIndex[skeletonBone.name] = skeleton.bones.size() - 1;
         }
     }
 
-    skeleton.boneCount = skeleton.bones.size();
+    for (unsigned int i = 0; i < scene->mNumAnimations; ++i) {
+        const aiAnimation* animation = scene->mAnimations[i];
+        for (unsigned int j = 0; j < animation->mNumChannels; ++j) {
+            const aiNodeAnim* channel = animation->mChannels[j];
+            std::string boneName(channel->mNodeName.C_Str());
+
+            if (skeleton.boneNameToIndex.find(boneName) != skeleton.boneNameToIndex.end()) {
+                int boneIndex = skeleton.boneNameToIndex[boneName];
+                skeleton.bones[boneIndex] = Bone(boneName, boneIndex, channel);
+            }
+        }
+    }
+
     return skeleton;
 }
 
 void updateBoneMatrices(Skeleton& skeleton, const AnimationClip& clip, float timeInSeconds) {
+    if (skeleton.boneCount == 0 || clip.channels.empty()) {
+        throw std::runtime_error("Invalid skeleton or animation clip data.");
+    }
+
     float ticksPerSecond = clip.ticksPerSecond != 0 ? clip.ticksPerSecond : 25.0f;
     float timeInTicks = timeInSeconds * ticksPerSecond;
     float animationTime = fmod(timeInTicks, clip.duration);
 
+    std::cout << "Updating bone matrices at time: " << animationTime << " seconds" << std::endl;
+
     for (const auto& channel : clip.channels) {
+        std::cout << "Processing channel for node: " << channel->mNodeName.C_Str() << std::endl;
+
+        if (skeleton.boneNameToIndex.find(channel->mNodeName.C_Str()) == skeleton.boneNameToIndex.end()) {
+            throw std::runtime_error("Bone name not found in skeleton: " + std::string(channel->mNodeName.C_Str()));
+        }
+
         int jointIndex = skeleton.boneNameToIndex[channel->mNodeName.C_Str()];
         glm::mat4 nodeTransformation = glm::mat4(1.0f); // Identity matrix
 
@@ -79,8 +104,11 @@ void updateBoneMatrices(Skeleton& skeleton, const AnimationClip& clip, float tim
 }
 
 glm::vec3 interpolatePosition(float animationTime, const aiNodeAnim* channel) {
-    if (channel == nullptr || channel->mNumPositionKeys == 0) {
-        return glm::vec3(0.0f);
+    if (channel == nullptr) {
+        throw std::runtime_error("Channel is null.");
+    }
+    if (channel->mNumPositionKeys == 0) {
+        throw std::runtime_error("No position keys in the channel.");
     }
 
     if (channel->mNumPositionKeys == 1) {
@@ -102,8 +130,11 @@ glm::vec3 interpolatePosition(float animationTime, const aiNodeAnim* channel) {
 }
 
 glm::quat interpolateRotation(float animationTime, const aiNodeAnim* channel) {
-    if (channel == nullptr || channel->mNumRotationKeys == 0) {
-        return glm::quat();
+    if (channel == nullptr) {
+        throw std::runtime_error("Channel is null.");
+    }
+    if (channel->mNumRotationKeys == 0) {
+        throw std::runtime_error("No rotation keys in the channel.");
     }
 
     if (channel->mNumRotationKeys == 1) {
@@ -127,8 +158,11 @@ glm::quat interpolateRotation(float animationTime, const aiNodeAnim* channel) {
 }
 
 glm::vec3 interpolateScaling(float animationTime, const aiNodeAnim* channel) {
-    if (channel == nullptr || channel->mNumScalingKeys == 0) {
-        return glm::vec3(1.0f); // Default to no scaling
+    if (channel == nullptr) {
+        throw std::runtime_error("Channel is null.");
+    }
+    if (channel->mNumScalingKeys == 0) {
+        throw std::runtime_error("No scaling keys in the channel.");
     }
 
     if (channel->mNumScalingKeys == 1) {

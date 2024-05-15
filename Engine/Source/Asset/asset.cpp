@@ -222,15 +222,22 @@ std::shared_ptr<AnimationClip> loadAnimation(Assets& assets, const std::string& 
     }
 
     if (scene->HasAnimations()) {
-        spdlog::info("Has Animations");
         for (unsigned int i = 0; i < scene->mNumAnimations; i++) {
-            spdlog::info("Name {}", scene->mAnimations[i]->mName.C_Str());
-            spdlog::info("Duration {}", scene->mAnimations[i]->mDuration);
-            spdlog::info("TicksPerSecond {}", scene->mAnimations[i]->mTicksPerSecond);
-
             const aiAnimation* animation = scene->mAnimations[i];
             std::shared_ptr<AnimationClip> clip = std::make_shared<AnimationClip>(loadAnimationClip(animation));
+
+            spdlog::info("ID {}", clip->id);
+            spdlog::info("Duration {}", clip->duration);
+            spdlog::info("TicksPerSecond {}", clip->ticksPerSecond);
+
+            for (unsigned int i = 0; i < animation->mNumChannels; ++i) {
+                const aiNodeAnim* channel = animation->mChannels[i];
+                spdlog::info("Animation Channel Node Name {}", channel->mNodeName.C_Str());
+            }
+
             assets.animations[handle] = clip;
+
+            return clip;
         }
     }
 
