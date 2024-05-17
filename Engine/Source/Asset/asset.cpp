@@ -19,10 +19,7 @@ void loadGameAssets() {
 
     loadModel(gAssets, "Assets/Meshes/suzanne.obj");
     loadModel(gAssets, "Assets/Meshes/uvcube.fbx");
-    auto model = loadModel(gAssets, "Assets/Meshes/Maria/Maria J J Ong.dae");
-
-    loadAnimation(gAssets, "Assets/Animations/Hip Hop Dancing.dae", model->boneInfoMap);
-    model->playAnimation("Assets/Animations/Hip Hop Dancing.dae", gAssets);
+    loadModel(gAssets, "Assets/Meshes/Maria/Maria J J Ong.dae");
 
     loadTexture(gAssets, "Assets/Textures/container.jpg", "texture_diffuse");
     loadTexture(gAssets, "Assets/Textures/awesomeface.png", "texture_diffuse");
@@ -195,38 +192,4 @@ std::shared_ptr<Texture> loadTexture(Assets& assets, const std::string& filePath
     spdlog::info("Texture loaded");
 
     return texture;
-}
-
-std::shared_ptr<Animation> loadAnimation(Assets& assets, const std::string& filePath, const std::map<std::string, BoneInfo>& boneInfoMap) {
-    spdlog::info("Loading animation {}", filePath);
-
-    Handle handle = generateHash(filePath);
-
-    auto it = assets.animations.find(handle);
-    if (it != assets.animations.end()) {
-        spdlog::warn("Animation has already been loaded: {}", filePath);
-        return it->second;
-    }
-
-    Assimp::Importer importer;
-    const aiScene* scene = importer.ReadFile(filePath,
-        aiProcess_CalcTangentSpace |
-        aiProcess_Triangulate |
-        aiProcess_JoinIdenticalVertices |
-        aiProcess_SortByPType);
-
-    if (!scene || !scene->mRootNode) {
-        spdlog::error("ASSIMP: {}", importer.GetErrorString());
-        return nullptr;
-    }
-
-    auto animation = std::make_shared<Animation>(scene, boneInfoMap);
-    if (!animation) {
-        spdlog::error("Failed to load animation from {}", filePath);
-        return nullptr;
-    }
-
-    spdlog::info("Animation loaded");
-
-    return animation;
 }

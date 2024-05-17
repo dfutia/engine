@@ -136,8 +136,6 @@
   <ItemGroup>
     <ClCompile Include="Compile\glad.c" />
     <ClCompile Include="Compile\stb.cpp" />
-    <ClCompile Include="Source\Animation\animation.cpp" />
-    <ClCompile Include="Source\Animation\bone.cpp" />
     <ClCompile Include="Source\Asset\asset.cpp" />
     <ClCompile Include="Source\Graphics\camera.cpp" />
     <ClCompile Include="Source\Graphics\mesh.cpp" />
@@ -151,9 +149,6 @@
     <ClCompile Include="Source\util.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Source\Animation\animation.h" />
-    <ClInclude Include="Source\Animation\bone.h" />
-    <ClInclude Include="Source\Animation\boneinfo.h" />
     <ClInclude Include="Source\Asset\asset.h" />
     <ClInclude Include="Source\Graphics\camera.h" />
     <ClInclude Include="Source\Graphics\mesh.h" />

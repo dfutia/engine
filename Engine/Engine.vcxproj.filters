@@ -54,12 +54,6 @@
     <ClCompile Include="Source\util.h">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Animation\bone.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Animation\animation.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Source\Graphics\renderer.h">
@@ -87,15 +81,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Source\Asset\asset.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\Animation\boneinfo.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\Animation\bone.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\Animation\animation.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

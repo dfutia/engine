@@ -21,8 +21,6 @@ void renderScene(Scene& scene, float timeInSeconds) {
 
     // Render objects in the scene
     for (auto object : scene.objects) {
-        object->model->updateBoneTransform(timeInSeconds / 1000.0f);
-
         // Local Space
         glm::vec3 position = object->position;
         glm::vec3 rotation = object->rotation;
@@ -36,12 +34,6 @@ void renderScene(Scene& scene, float timeInSeconds) {
             glm::scale(glm::mat4(1.0f), scale);
 
         scene.program->setUniform("model", model);
-
-        // Bind bone transforms
-        for (size_t i = 0; i < object->model->boneTransforms.size(); ++i) {
-            //spdlog::info("Bone {} transform:\n{}", i, glm::to_string(object->model->boneTransforms[i]));
-            scene.program->setUniform("bones[" + std::to_string(i) + "]", object->model->boneTransforms[i]);
-        }
 
         // Bind Textures
         unsigned int diffuseNr = 1;
