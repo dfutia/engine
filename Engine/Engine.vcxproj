@@ -136,8 +136,8 @@
   <ItemGroup>
     <ClCompile Include="Compile\glad.c" />
     <ClCompile Include="Compile\stb.cpp" />
-    <ClCompile Include="Source\Animation\animationclip.cpp" />
-    <ClCompile Include="Source\Animation\skeleton.cpp" />
+    <ClCompile Include="Source\Animation\animation.cpp" />
+    <ClCompile Include="Source\Animation\bone.cpp" />
     <ClCompile Include="Source\Asset\asset.cpp" />
     <ClCompile Include="Source\Graphics\camera.cpp" />
     <ClCompile Include="Source\Graphics\mesh.cpp" />
@@ -148,13 +148,12 @@
     <ClCompile Include="Source\main.cpp" />
     <ClCompile Include="Source\Scene\scene.cpp" />
     <ClCompile Include="Source\Scene\sceneobject.cpp" />
-    <ClCompile Include="Source\Scene\util.cpp" />
     <ClCompile Include="Source\util.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Source\Animation\animationclip.h" />
+    <ClInclude Include="Source\Animation\animation.h" />
     <ClInclude Include="Source\Animation\bone.h" />
-    <ClInclude Include="Source\Animation\skeleton.h" />
+    <ClInclude Include="Source\Animation\boneinfo.h" />
     <ClInclude Include="Source\Asset\asset.h" />
     <ClInclude Include="Source\Graphics\camera.h" />
     <ClInclude Include="Source\Graphics\mesh.h" />

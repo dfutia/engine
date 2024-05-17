@@ -51,16 +51,13 @@
     <ClCompile Include="Source\Graphics\texture.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Animation\animationclip.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Animation\skeleton.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Source\util.h">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Scene\util.cpp">
+    <ClCompile Include="Source\Animation\bone.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Animation\animation.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -92,13 +89,13 @@
     <ClInclude Include="Source\Asset\asset.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Source\Animation\skeleton.h">
+    <ClInclude Include="Source\Animation\boneinfo.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Source\Animation\bone.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Source\Animation\animationclip.h">
+    <ClInclude Include="Source\Animation\animation.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

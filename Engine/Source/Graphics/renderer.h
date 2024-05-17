@@ -9,6 +9,6 @@
 struct Scene;
 struct ShaderProgram;
 
-void renderScene(Scene& scene);
+void renderScene(Scene& scene, float deltaTime);
 
 #endif 

@@ -1,11 +1,85 @@
 #include "model.h"
+#include "util.h"
 
 #include "Asset/asset.h"
 #include "Graphics/mesh.h"
 
 #include <glad/glad.h>
-
+#include <glm/gtx/quaternion.hpp> 
+#include <glm/gtx/string_cast.hpp>
 #include <spdlog/spdlog.h>
+
+void Model::playAnimation(const std::string& animationPath, Assets& assets) {
+    auto animation = loadAnimation(gAssets, animationPath, boneInfoMap);
+    if (animation) {
+        spdlog::info("DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD");
+        currentAnimation = animation;
+    }
+}
+
+void Model::updateBoneTransform(float timeInSeconds) {
+    if (!currentAnimation) {
+        spdlog::error("No current animation");
+        return;
+    }
+
+    // Calculate the current animation time
+    float animationTime = fmod(timeInSeconds * currentAnimation->ticksPerSecond, currentAnimation->duration);
+    if (animationTime < 0.0f) {
+        animationTime += currentAnimation->duration;
+    }
+
+    //spdlog::info("Animation time: {}", animationTime);
+
+    std::vector<glm::mat4> boneTransforms(boneCounter, glm::mat4(1.0f));
+
+    // Function to recursively calculate bone transformations
+    std::function<void(int, const glm::mat4&)> calculateBoneTransform = [&](int boneId, const glm::mat4& parentTransform) {
+        const Bone& bone = currentAnimation->bones[boneId];
+
+        glm::vec3 position = interpolatePosition(animationTime, bone);
+        glm::quat rotation = interpolateRotation(animationTime, bone);
+        glm::vec3 scale = interpolateScale(animationTime, bone);
+
+        glm::mat4 localTransform = glm::translate(glm::mat4(1.0f), position) *
+            glm::toMat4(rotation) *
+            glm::scale(glm::mat4(1.0f), scale);
+
+        glm::mat4 globalTransform = parentTransform * localTransform;
+
+        boneTransforms[bone.id] = globalTransform;
+
+        spdlog::info("Bone ID: {}, Name: {}, Global Transform: [{}, {}, {}, {}]",
+            bone.id, bone.name,
+            globalTransform[0][0], globalTransform[0][1], globalTransform[0][2], globalTransform[0][3]);
+
+        // Recursively calculate for children bones
+        if (currentAnimation->boneHierarchy.find(bone.id) != currentAnimation->boneHierarchy.end()) {
+            for (int childId : currentAnimation->boneHierarchy[bone.id]) {
+                calculateBoneTransform(childId, globalTransform);
+            }
+        }
+        };
+
+    // Find the root bones and start the recursive calculation
+    for (const auto& boneInfo : currentAnimation->boneHierarchy) {
+        int parentId = boneInfo.first;
+        bool isRoot = true;
+        for (const auto& otherBoneInfo : currentAnimation->boneHierarchy) {
+            if (std::find(otherBoneInfo.second.begin(), otherBoneInfo.second.end(), parentId) != otherBoneInfo.second.end()) {
+                isRoot = false;
+                break;
+            }
+        }
+        if (isRoot) {
+            calculateBoneTransform(parentId, glm::mat4(1.0f));
+        }
+    }
+
+    // Store bone transforms for rendering
+    this->boneTransforms = boneTransforms;
+    spdlog::info("Updated bone transforms for model at animation time {}", animationTime);
+}
 
 void processNode(aiNode* node, const aiScene* scene, Model& model) {
     for (unsigned int i = 0; i < node->mNumMeshes; i++) {
@@ -51,28 +125,7 @@ Mesh processMesh(aiMesh* mesh, const aiScene* scene, Model& model) {
         }
     }
 
-    // Process bones 
-    if (mesh->HasBones()) {
-        for (unsigned int i = 0; i < mesh->mNumBones; i++) {
-            aiBone* bone = mesh->mBones[i];
-            int boneID = i;
-
-            for (unsigned int j = 0; j < bone->mNumWeights; j++) {
-                aiVertexWeight weight = bone->mWeights[j];
-                int vertexID = weight.mVertexId;
-                float boneWeight = weight.mWeight;
-
-                // Find the first empty slot for the joint index and weight
-                for (int k = 0; k < MAX_BONES_PER_VERTEX; k++) {
-                    if (vertices[vertexID].boneWeights[k] == 0.0f) {
-                        vertices[vertexID].boneIndices[k] = boneID;
-                        vertices[vertexID].boneWeights[k] = boneWeight;
-                        break;
-                    }
-                }
-            }
-        }
-    }
+    extractBoneWeightForVertices(model, vertices, mesh, scene);
 
     aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
 
@@ -104,4 +157,46 @@ std::vector<Texture> loadMaterialTexture(aiMaterial* mat, aiTextureType type, st
     }
 
     return textures;
+}
+
+void setVertexBoneData(Vertex& vertex, int boneID, float weight) {
+    for (int i = 0; i < 4; ++i)
+    {
+        if (vertex.boneIndices[i] < 0)
+        {
+            vertex.boneWeights[i] = weight;
+            vertex.boneIndices[i] = boneID;
+            break;
+        }
+    }
+}
+
+void extractBoneWeightForVertices(Model& model, std::vector<Vertex>& vertices, aiMesh* mesh, const aiScene* scene) {
+    for (int boneIndex = 0; boneIndex < mesh->mNumBones; ++boneIndex) {
+        int boneID = -1;
+        std::string boneName = mesh->mBones[boneIndex]->mName.C_Str();
+        if (model.boneInfoMap.find(boneName) == model.boneInfoMap.end()) {
+            BoneInfo newBoneInfo;
+            newBoneInfo.id = model.boneCounter;
+            newBoneInfo.offsetMatrix = convertMatrixToGLMFormat(mesh->mBones[boneIndex]->mOffsetMatrix);
+            model.boneInfoMap[boneName] = newBoneInfo;
+            boneID = model.boneCounter;
+            model.boneCounter++;
+            spdlog::info("Extracting bone: {}", boneName);
+            spdlog::info("Bone {} with ID {} and offset matrix:\n{}", boneName, boneID, glm::to_string(newBoneInfo.offsetMatrix));
+        }
+        else {
+            boneID = model.boneInfoMap[boneName].id;
+        }
+        assert(boneID != -1);
+        auto weights = mesh->mBones[boneIndex]->mWeights;
+        int numWeights = mesh->mBones[boneIndex]->mNumWeights;
+
+        for (int weightIndex = 0; weightIndex < numWeights; ++weightIndex) {
+            int vertexId = weights[weightIndex].mVertexId;
+            float weight = weights[weightIndex].mWeight;
+            assert(vertexId < vertices.size());
+            setVertexBoneData(vertices[vertexId], boneID, weight);
+        }
+    }
 }

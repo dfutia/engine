@@ -19,9 +19,10 @@ void loadGameAssets() {
 
     loadModel(gAssets, "Assets/Meshes/suzanne.obj");
     loadModel(gAssets, "Assets/Meshes/uvcube.fbx");
-    loadModel(gAssets, "Assets/Meshes/Maria/Maria J J Ong.dae");
+    auto model = loadModel(gAssets, "Assets/Meshes/Maria/Maria J J Ong.dae");
 
-    loadAnimation(gAssets, "Assets/Animations/Rumba Dancing.fbx");
+    loadAnimation(gAssets, "Assets/Animations/Hip Hop Dancing.dae", model->boneInfoMap);
+    model->playAnimation("Assets/Animations/Hip Hop Dancing.dae", gAssets);
 
     loadTexture(gAssets, "Assets/Textures/container.jpg", "texture_diffuse");
     loadTexture(gAssets, "Assets/Textures/awesomeface.png", "texture_diffuse");
@@ -131,7 +132,6 @@ std::shared_ptr<Model> loadModel(Assets& assets, const std::string& filePath) {
     // Create the model
     auto model = std::make_shared<Model>();
     model->directory = filePath.substr(0, filePath.find_last_of("/\\"));
-    model->skeleton = createSkeleton(scene);
 
     processNode(scene->mRootNode, scene, *model);
 
@@ -197,49 +197,36 @@ std::shared_ptr<Texture> loadTexture(Assets& assets, const std::string& filePath
     return texture;
 }
 
-std::shared_ptr<AnimationClip> loadAnimation(Assets& assets, const std::string& filePath) {
-    // Generate a unique id to identify the asset
+std::shared_ptr<Animation> loadAnimation(Assets& assets, const std::string& filePath, const std::map<std::string, BoneInfo>& boneInfoMap) {
+    spdlog::info("Loading animation {}", filePath);
+
     Handle handle = generateHash(filePath);
 
-    // Check if the asset already exist if so return it
     auto it = assets.animations.find(handle);
     if (it != assets.animations.end()) {
-        spdlog::warn("Animation has already been loaded {}", filePath);
+        spdlog::warn("Animation has already been loaded: {}", filePath);
         return it->second;
     }
 
     Assimp::Importer importer;
-
     const aiScene* scene = importer.ReadFile(filePath,
         aiProcess_CalcTangentSpace |
         aiProcess_Triangulate |
         aiProcess_JoinIdenticalVertices |
         aiProcess_SortByPType);
 
-    if (nullptr == scene) {
-        std::cout << "ASSIMP: " << importer.GetErrorString() << "\n";
+    if (!scene || !scene->mRootNode) {
+        spdlog::error("ASSIMP: {}", importer.GetErrorString());
         return nullptr;
     }
 
-    if (scene->HasAnimations()) {
-        for (unsigned int i = 0; i < scene->mNumAnimations; i++) {
-            const aiAnimation* animation = scene->mAnimations[i];
-            std::shared_ptr<AnimationClip> clip = std::make_shared<AnimationClip>(loadAnimationClip(animation));
-
-            spdlog::info("ID {}", clip->id);
-            spdlog::info("Duration {}", clip->duration);
-            spdlog::info("TicksPerSecond {}", clip->ticksPerSecond);
-
-            for (unsigned int i = 0; i < animation->mNumChannels; ++i) {
-                const aiNodeAnim* channel = animation->mChannels[i];
-                spdlog::info("Animation Channel Node Name {}", channel->mNodeName.C_Str());
-            }
-
-            assets.animations[handle] = clip;
-
-            return clip;
-        }
+    auto animation = std::make_shared<Animation>(scene, boneInfoMap);
+    if (!animation) {
+        spdlog::error("Failed to load animation from {}", filePath);
+        return nullptr;
     }
 
-    return nullptr;
+    spdlog::info("Animation loaded");
+
+    return animation;
 }

@@ -7,10 +7,11 @@
 #include <glm/mat4x4.hpp>
 #include <glm/trigonometric.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/string_cast.hpp>
 
 #include <spdlog/spdlog.h>
 
-void renderScene(Scene& scene) {
+void renderScene(Scene& scene, float timeInSeconds) {
     glm::mat4 view = scene.camera->getViewMatrix();  // Get the dynamic view matrix from the camera
     glm::mat4 projection = glm::perspective(glm::radians(70.0f), (float)1280 / (float)720, 0.1f, 500.0f);  // Perspective projection matrix
 
@@ -20,6 +21,8 @@ void renderScene(Scene& scene) {
 
     // Render objects in the scene
     for (auto object : scene.objects) {
+        object->model->updateBoneTransform(timeInSeconds / 1000.0f);
+
         // Local Space
         glm::vec3 position = object->position;
         glm::vec3 rotation = object->rotation;
@@ -33,6 +36,12 @@ void renderScene(Scene& scene) {
             glm::scale(glm::mat4(1.0f), scale);
 
         scene.program->setUniform("model", model);
+
+        // Bind bone transforms
+        for (size_t i = 0; i < object->model->boneTransforms.size(); ++i) {
+            //spdlog::info("Bone {} transform:\n{}", i, glm::to_string(object->model->boneTransforms[i]));
+            scene.program->setUniform("bones[" + std::to_string(i) + "]", object->model->boneTransforms[i]);
+        }
 
         // Bind Textures
         unsigned int diffuseNr = 1;
@@ -60,10 +69,6 @@ void renderScene(Scene& scene) {
 
             scene.program->setUniformInt((name + number).c_str(), i);
             glBindTexture(GL_TEXTURE_2D, object->model->textures[i].id);
-        }
-
-        for (unsigned int i = 0; i < object->model->skeleton.boneCount; ++i) {
-            scene.program->setUniform("boneMatrices[" + std::to_string(i) + "]", object->model->skeleton.boneMatrices[i]);
         }
 
         // Bind Mesh

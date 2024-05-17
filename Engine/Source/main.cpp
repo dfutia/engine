@@ -63,10 +63,6 @@ int main(int argc, char* argv[]) {
     loadGameAssets();
     loadScene(scene);
 
-    spdlog::info("TEST");
-    auto myModel = loadModel(gAssets, "Assets/Meshes/Maria/Maria J J Ong.dae");
-    auto myAnim = loadAnimation(gAssets, "Assets/Animations/Rumba Dancing.fbx");
-
     Uint32 lastTime = SDL_GetTicks(), currentTime;
 
     bool running = true;
@@ -91,11 +87,7 @@ int main(int argc, char* argv[]) {
         glViewport(0, 0, 1280, 720);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        if (myModel && myAnim) {
-            updateBoneMatrices(myModel->skeleton, *myAnim, currentTime);
-        }
-
-        renderScene(scene);
+        renderScene(scene, currentTime);
 
         lastTime = currentTime;
         getFrameEvents().clear();
