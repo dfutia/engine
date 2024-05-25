@@ -1,4 +1,7 @@
 #include "scene.h"
+#include "Graphics/animator.h"
+
+#include <spdlog/spdlog.h>
 
 void addObjectToScene(Scene& scene, std::shared_ptr<SceneObject> object) {
     scene.objects.push_back(object);
@@ -11,9 +14,10 @@ void loadScene(Scene& scene) {
     auto player = std::make_shared<SceneObject>();
     player->name = "Player";
     player->model = loadModel(gAssets, "Assets/Meshes/Maria/Maria J J Ong.dae");
-    player->position = glm::vec3(0.0f, 0.0f, 0.0f);
+    player->animator = std::make_shared<Animator>(loadAnimation(gAssets, "Assets/Animations/Ymca Dance.dae", *player->model).get());
+    player->position = glm::vec3(0.0f, -0.4f, 0.0f);
     player->rotation = glm::vec3(0.0f, 0.0f, 0.0f);
-    player->scale = glm::vec3(0.1f, 0.1f, 0.1f);
+    player->scale = glm::vec3(0.5f, 0.5f, 0.5f);
 
     addObjectToScene(scene, player);
 }

@@ -5,6 +5,7 @@
 #include "Graphics/model.h"
 #include "Graphics/texture.h"
 #include "Graphics/shader.h"
+#include "Graphics/animation.h"
 
 #include <spdlog/spdlog.h>
 
@@ -18,6 +19,7 @@ struct Assets {
     std::unordered_map<Handle, std::shared_ptr<Texture>> textures;
     std::unordered_map<Handle, std::shared_ptr<Model>> models;
     std::unordered_map<Handle, std::shared_ptr<ShaderProgram>> shaders;
+    std::unordered_map<Handle, std::shared_ptr<Animation>> animations;
 };
 
 void loadGameAssets();
@@ -27,8 +29,9 @@ Handle generateHash(const std::string& key);
 std::string loadShaderSource(const std::string& filepath);
 
 std::shared_ptr<ShaderProgram> loadShader(Assets& assets, const std::string& vertexPath, const std::string& fragmentPath);
-std::shared_ptr<Model> loadModel(Assets& assets, const std::string& filePath);
 std::shared_ptr<Texture> loadTexture(Assets& assets, const std::string& filePath, const std::string& type);
+std::shared_ptr<Model> loadModel(Assets& assets, const std::string& filePath);
+std::shared_ptr<Animation> loadAnimation(Assets& assets, const std::string& path, Model& model);
 
 extern Assets gAssets;
 

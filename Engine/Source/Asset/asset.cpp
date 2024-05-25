@@ -1,5 +1,7 @@
 #include "Asset/asset.h"
 
+#include <assimp/Logger.hpp>
+#include <assimp/DefaultLogger.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 #include <assimp/Importer.hpp>
@@ -17,9 +19,9 @@ void loadGameAssets() {
     program->setUniformInt("texture1", 0);
     program->setUniformInt("texture2", 1);
 
-    loadModel(gAssets, "Assets/Meshes/suzanne.obj");
-    loadModel(gAssets, "Assets/Meshes/uvcube.fbx");
-    loadModel(gAssets, "Assets/Meshes/Maria/Maria J J Ong.dae");
+    auto model = loadModel(gAssets, "Assets/Meshes/Maria/Maria J J Ong.dae");
+
+    loadAnimation(gAssets, "Assets/Animations/Twist Dance(1).fbx", *model);
 
     loadTexture(gAssets, "Assets/Textures/container.jpg", "texture_diffuse");
     loadTexture(gAssets, "Assets/Textures/awesomeface.png", "texture_diffuse");
@@ -101,8 +103,6 @@ std::shared_ptr<ShaderProgram> loadShader(Assets& assets, const std::string& ver
 }
 
 std::shared_ptr<Model> loadModel(Assets& assets, const std::string& filePath) {
-    spdlog::info("Loading model {}", filePath);
-
     // Generate a unique id to identify the asset
     Handle handle = generateHash(filePath);
 
@@ -115,10 +115,7 @@ std::shared_ptr<Model> loadModel(Assets& assets, const std::string& filePath) {
 
     // Import the data
     Assimp::Importer importer;
-    const aiScene* scene = importer.ReadFile(filePath,
-        aiProcess_Triangulate |
-        aiProcess_GenSmoothNormals |
-        aiProcess_CalcTangentSpace);
+    const aiScene* scene = importer.ReadFile(filePath, aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_CalcTangentSpace);
 
     // Check if the import failed
     if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) {
@@ -127,21 +124,19 @@ std::shared_ptr<Model> loadModel(Assets& assets, const std::string& filePath) {
     }
 
     // Create the model
-    auto model = std::make_shared<Model>();
-    model->directory = filePath.substr(0, filePath.find_last_of("/\\"));
+    auto newModel = std::make_shared<Model>();
+    newModel->directory = filePath.substr(0, filePath.find_last_of("/\\"));
 
-    processNode(scene->mRootNode, scene, *model);
+    processNode(scene->mRootNode, scene, *newModel);
 
-    assets.models[handle] = model;
+    assets.models[handle] = newModel;
 
     spdlog::info("Model loaded");
 
-    return model;
+    return newModel;
 }
 
 std::shared_ptr<Texture> loadTexture(Assets& assets, const std::string& filePath, const std::string& type) {
-    spdlog::info("Loading texture");
-
     Handle handle = generateHash(filePath);
 
     auto it = assets.textures.find(handle);
@@ -192,4 +187,34 @@ std::shared_ptr<Texture> loadTexture(Assets& assets, const std::string& filePath
     spdlog::info("Texture loaded");
 
     return texture;
+}
+
+std::shared_ptr<Animation> loadAnimation(Assets& assets, const std::string& path, Model& model) {
+    // Generate a unique id to identify the asset
+    Handle handle = generateHash(path);
+
+    // Check if the asset already exist if so return it
+    auto it = assets.animations.find(handle);
+    if (it != assets.animations.end()) {
+        spdlog::warn("Animation has already been loaded {}", path);
+        return it->second;
+    }
+
+    Assimp::Importer importer;
+    const aiScene* scene = importer.ReadFile(path, aiProcess_Triangulate);
+
+    assert(scene && scene->mRootNode);
+
+    aiAnimation* aiAnimation = scene->mAnimations[0];
+
+    std::shared_ptr<Animation> newAnimation = std::make_shared<Animation>();
+    newAnimation->duration = aiAnimation->mDuration;
+    newAnimation->ticksPerSecond = aiAnimation->mTicksPerSecond;
+
+    newAnimation->readHierarchyData(newAnimation->rootNode, scene->mRootNode);
+    newAnimation->readMissingBones(aiAnimation, model);
+
+    assets.animations[handle] = newAnimation;
+
+    return assets.animations[handle];
 }

@@ -3,6 +3,7 @@
 #include "Scene/scene.h"
 #include "Asset/asset.h"
 #include "Graphics/shader.h"
+#include "Graphics/animator.h"
 
 #include <glm/mat4x4.hpp>
 #include <glm/trigonometric.hpp>
@@ -11,7 +12,9 @@
 
 #include <spdlog/spdlog.h>
 
-void renderScene(Scene& scene, float timeInSeconds) {
+#include <unordered_set>
+
+void renderScene(Scene& scene, float deltaTime) {
     glm::mat4 view = scene.camera->getViewMatrix();  // Get the dynamic view matrix from the camera
     glm::mat4 projection = glm::perspective(glm::radians(70.0f), (float)1280 / (float)720, 0.1f, 500.0f);  // Perspective projection matrix
 
@@ -21,6 +24,8 @@ void renderScene(Scene& scene, float timeInSeconds) {
 
     // Render objects in the scene
     for (auto object : scene.objects) {
+        object->animator->updateAnimation(deltaTime);
+
         // Local Space
         glm::vec3 position = object->position;
         glm::vec3 rotation = object->rotation;
@@ -34,6 +39,11 @@ void renderScene(Scene& scene, float timeInSeconds) {
             glm::scale(glm::mat4(1.0f), scale);
 
         scene.program->setUniform("model", model);
+
+        auto transforms = object->animator->finalBoneMatrices;
+        for (int i = 0; i < transforms.size(); ++i) {
+            scene.program->setUniform("finalBones[" + std::to_string(i) + "]", transforms[i]);
+        }
 
         // Bind Textures
         unsigned int diffuseNr = 1;

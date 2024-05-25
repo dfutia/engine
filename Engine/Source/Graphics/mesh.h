@@ -9,16 +9,14 @@
 
 #include <vector>
 
-const int MAX_BONES_PER_VERTEX = 4;
-
 struct Vertex {
 	glm::vec3 position;
 	glm::vec3 color;
 	glm::vec2 texCoords;
 
 	// Animatin data
-	glm::ivec4 boneIndices;
-	glm::vec4 boneWeights;
+	int boneIds[4];
+	float boneWeights[4];
 };
 
 struct Mesh {

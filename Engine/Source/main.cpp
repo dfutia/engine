@@ -8,6 +8,7 @@
 
 #include <spdlog/spdlog.h>
 #include <glm/ext/matrix_clip_space.hpp>
+#include <stb_image.h>
 
 struct App {
     SDL_Window* m_window = nullptr;
@@ -60,6 +61,11 @@ int main(int argc, char* argv[]) {
     Scene scene;
 
 	initWindow(app, "Game", 1280, 720, true);
+
+    stbi_set_flip_vertically_on_load(true);
+
+    glEnable(GL_DEPTH_TEST);
+
     loadGameAssets();
     loadScene(scene);
 
@@ -68,7 +74,7 @@ int main(int argc, char* argv[]) {
     bool running = true;
     while (running) {
         currentTime = SDL_GetTicks();
-        float deltaTime = (currentTime - lastTime) / 1000.0f; // Time in seconds
+        float deltaTime = (currentTime - lastTime) / 1000.0f; 
 
         SDL_Event event;
         while (SDL_PollEvent(&event)) {
@@ -82,12 +88,11 @@ int main(int argc, char* argv[]) {
 
         scene.camera->handleEvent(getFrameEvents(), deltaTime);
 
-        glEnable(GL_DEPTH_TEST);
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glViewport(0, 0, 1280, 720);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        renderScene(scene, currentTime);
+        renderScene(scene, deltaTime);
 
         lastTime = currentTime;
         getFrameEvents().clear();
