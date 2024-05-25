@@ -17,7 +17,6 @@ struct SceneObject {
     glm::vec3 rotation;
     glm::vec3 scale;
     std::shared_ptr<Model> model;
-    std::shared_ptr<Animator> animator;
 };
 
 void printObject(SceneObject& object);

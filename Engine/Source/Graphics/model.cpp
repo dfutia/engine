@@ -28,7 +28,7 @@ Mesh processMesh(aiMesh* mesh, const aiScene* scene, Model& model) {
     // Process vertices
     for (unsigned int i = 0; i < mesh->mNumVertices; i++) {
         Vertex vertex;
-        setVertexBoneDataToDefault(vertex);
+
         vertex.position = glm::vec3(mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z);
         vertex.color = glm::vec3(1.0f); // Default color
         if (mesh->mTextureCoords[0]) {
@@ -50,93 +50,82 @@ Mesh processMesh(aiMesh* mesh, const aiScene* scene, Model& model) {
 
     aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
 
-    std::vector<Texture> diffuseMaps = loadMaterialTexture(material, aiTextureType_DIFFUSE, "texture_diffuse", model);
+    std::vector<Texture> diffuseMaps = loadMaterialTexture(material, aiTextureType_DIFFUSE, "texture_diffuse", scene, model);
     model.textures.insert(model.textures.end(), diffuseMaps.begin(), diffuseMaps.end());
 
-    std::vector<Texture> specularMaps = loadMaterialTexture(material, aiTextureType_SPECULAR, "texture_specular", model);
+    std::vector<Texture> specularMaps = loadMaterialTexture(material, aiTextureType_SPECULAR, "texture_specular", scene, model);
     model.textures.insert(model.textures.end(), specularMaps.begin(), specularMaps.end());
 
-    std::vector<Texture> normalMaps = loadMaterialTexture(material, aiTextureType_HEIGHT, "texture_normal", model);
+    std::vector<Texture> normalMaps = loadMaterialTexture(material, aiTextureType_HEIGHT, "texture_normal", scene, model);
     model.textures.insert(model.textures.end(), normalMaps.begin(), normalMaps.end());
 
-    std::vector<Texture> heightMaps = loadMaterialTexture(material, aiTextureType_AMBIENT, "texture_height", model);
+    std::vector<Texture> heightMaps = loadMaterialTexture(material, aiTextureType_AMBIENT, "texture_height", scene, model);
     model.textures.insert(model.textures.end(), heightMaps.begin(), heightMaps.end());
-
-    extractBoneWeightForVertices(vertices, mesh, scene, model);
 
     return setupMesh(vertices, indices);
 }
 
-std::vector<Texture> loadMaterialTexture(aiMaterial* mat, aiTextureType type, std::string typeName, Model& model) {
+// https://chatgpt.com/g/g-3s6SJ5V7S-askthecode-git-companion/c/7ce512cd-ffa7-43f6-97ab-fdb33385d32c?oauth_success=true
+std::vector<Texture> loadMaterialTexture(aiMaterial* mat, aiTextureType type, std::string typeName, const aiScene* scene, Model& model) {
     std::vector<Texture> textures;
 
     for (unsigned int i = 0; i < mat->GetTextureCount(type); i++)
     {
         aiString path;
         mat->GetTexture(type, i, &path);
-        std::string absolutePath = model.directory + "/" + path.C_Str();
-        //spdlog::info("Loading material texture {}", absolutePath);
-        textures.push_back(*loadTexture(gAssets, absolutePath.c_str(), typeName));
+
+        aiTexture const* texture = scene->GetEmbeddedTexture(path.C_Str());
+        if (texture) {
+            unsigned int textureID;
+            glGenTextures(1, &textureID);
+            glBindTexture(GL_TEXTURE_2D, textureID);
+
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+            int width, height;
+            unsigned char* data = nullptr;
+            if (texture->mHeight == 0) { // Compressed texture
+                data = stbi_load_from_memory((unsigned char*)texture->pcData, texture->mWidth, &width, &height, nullptr, 4);
+            }
+            else { // Uncompressed texture
+                width = texture->mWidth;
+                height = texture->mHeight;
+                data = (unsigned char*)texture->pcData;
+            }
+
+            if (data) {
+                glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+                glGenerateMipmap(GL_TEXTURE_2D);
+                if (texture->mHeight == 0) {
+                    stbi_image_free(data);
+                }
+            }
+            else {
+                spdlog::error("Failed to load embedded texture");
+                if (texture->mHeight == 0) {
+                    stbi_image_free(data);
+                }
+                glDeleteTextures(1, &textureID);
+                return {};
+            }
+
+            auto texture = std::make_shared<Texture>();
+            texture->id = textureID;
+            texture->type = type;
+
+            spdlog::info("Embedded texture loaded");
+
+            textures.push_back(*texture);
+        }
+        else {
+            spdlog::info("external  texture");
+            std::string absolutePath = model.directory + "/" + path.C_Str();
+            textures.push_back(*loadTexture(gAssets, absolutePath.c_str(), typeName));
+        }
     }
 
     return textures;
-}
-
-void setVertexBoneDataToDefault(Vertex& vertex)
-{
-    for (int i = 0; i < 4; i++)
-    {
-        vertex.boneIds[i] = -1;
-        vertex.boneWeights[i] = 0.0f;
-    }
-}
-
-void setVertexBoneData(Vertex& vertex, int boneID, float weight)
-{
-    for (int i = 0; i < 4; ++i)
-    {
-        if (vertex.boneIds[i] < 0)
-        {
-            vertex.boneWeights[i] = weight;
-            vertex.boneIds[i] = boneID;
-            break;
-        }
-    }
-}
-
-void extractBoneWeightForVertices(std::vector<Vertex>& vertices, aiMesh* mesh, const aiScene* scene, Model& model)
-{
-    auto& boneInfoMap = model.boneInfoMap;
-    int& boneCount = model.boneCounter;
-
-    for (int boneIndex = 0; boneIndex < mesh->mNumBones; ++boneIndex)
-    {
-        int boneID = -1;
-        std::string boneName = mesh->mBones[boneIndex]->mName.C_Str();
-        //spdlog::info("Bone Name: {}", boneName);
-        if (boneInfoMap.find(boneName) == boneInfoMap.end())
-        {
-            BoneInfo newBoneInfo;
-            newBoneInfo.id = boneCount;
-            newBoneInfo.offsetMatrix = convertMatrixToGLMFormat(mesh->mBones[boneIndex]->mOffsetMatrix);
-            boneInfoMap[boneName] = newBoneInfo;
-            boneID = boneCount;
-            boneCount++;
-        }
-        else
-        {
-            boneID = boneInfoMap[boneName].id;
-        }
-        assert(boneID != -1);
-        auto weights = mesh->mBones[boneIndex]->mWeights;
-        int numWeights = mesh->mBones[boneIndex]->mNumWeights;
-
-        for (int weightIndex = 0; weightIndex < numWeights; ++weightIndex)
-        {
-            int vertexId = weights[weightIndex].mVertexId;
-            float weight = weights[weightIndex].mWeight;
-            assert(vertexId <= vertices.size());
-            setVertexBoneData(vertices[vertexId], boneID, weight);
-        }
-    }
 }

@@ -3,7 +3,6 @@
 #include "Scene/scene.h"
 #include "Asset/asset.h"
 #include "Graphics/shader.h"
-#include "Graphics/animator.h"
 
 #include <glm/mat4x4.hpp>
 #include <glm/trigonometric.hpp>
@@ -24,8 +23,6 @@ void renderScene(Scene& scene, float deltaTime) {
 
     // Render objects in the scene
     for (auto object : scene.objects) {
-        object->animator->updateAnimation(deltaTime);
-
         // Local Space
         glm::vec3 position = object->position;
         glm::vec3 rotation = object->rotation;
@@ -39,11 +36,6 @@ void renderScene(Scene& scene, float deltaTime) {
             glm::scale(glm::mat4(1.0f), scale);
 
         scene.program->setUniform("model", model);
-
-        auto transforms = object->animator->finalBoneMatrices;
-        for (int i = 0; i < transforms.size(); ++i) {
-            scene.program->setUniform("finalBones[" + std::to_string(i) + "]", transforms[i]);
-        }
 
         // Bind Textures
         unsigned int diffuseNr = 1;

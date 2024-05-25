@@ -19,9 +19,8 @@ void loadGameAssets() {
     program->setUniformInt("texture1", 0);
     program->setUniformInt("texture2", 1);
 
-    auto model = loadModel(gAssets, "Assets/Meshes/Maria/Maria J J Ong.dae");
-
-    loadAnimation(gAssets, "Assets/Animations/Twist Dance(1).fbx", *model);
+    loadModel(gAssets, "Assets/Meshes/Maria/Maria J J Ong.dae");
+    loadModel(gAssets, "Assets/Meshes/Maria J J Ong.fbx");
 
     loadTexture(gAssets, "Assets/Textures/container.jpg", "texture_diffuse");
     loadTexture(gAssets, "Assets/Textures/awesomeface.png", "texture_diffuse");
@@ -102,40 +101,6 @@ std::shared_ptr<ShaderProgram> loadShader(Assets& assets, const std::string& ver
     }
 }
 
-std::shared_ptr<Model> loadModel(Assets& assets, const std::string& filePath) {
-    // Generate a unique id to identify the asset
-    Handle handle = generateHash(filePath);
-
-    // Check if the asset already exist if so return it
-    auto it = assets.models.find(handle);
-    if (it != assets.models.end()) {
-        spdlog::warn("Model has already been loaded {}", filePath);
-        return it->second;
-    }
-
-    // Import the data
-    Assimp::Importer importer;
-    const aiScene* scene = importer.ReadFile(filePath, aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_CalcTangentSpace);
-
-    // Check if the import failed
-    if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) {
-        spdlog::error("ASSIMP: {}", importer.GetErrorString());
-        return {};
-    }
-
-    // Create the model
-    auto newModel = std::make_shared<Model>();
-    newModel->directory = filePath.substr(0, filePath.find_last_of("/\\"));
-
-    processNode(scene->mRootNode, scene, *newModel);
-
-    assets.models[handle] = newModel;
-
-    spdlog::info("Model loaded");
-
-    return newModel;
-}
-
 std::shared_ptr<Texture> loadTexture(Assets& assets, const std::string& filePath, const std::string& type) {
     Handle handle = generateHash(filePath);
 
@@ -189,32 +154,51 @@ std::shared_ptr<Texture> loadTexture(Assets& assets, const std::string& filePath
     return texture;
 }
 
-std::shared_ptr<Animation> loadAnimation(Assets& assets, const std::string& path, Model& model) {
-    // Generate a unique id to identify the asset
-    Handle handle = generateHash(path);
+std::shared_ptr<Model> loadModel(Assets& assets, const std::string& filePath) {
+    Assimp::Importer importer;
+    importer.SetPropertyBool(AI_CONFIG_IMPORT_FBX_PRESERVE_PIVOTS, false);
 
-    // Check if the asset already exist if so return it
-    auto it = assets.animations.find(handle);
-    if (it != assets.animations.end()) {
-        spdlog::warn("Animation has already been loaded {}", path);
-        return it->second;
+    unsigned flags = aiProcess_Triangulate | aiProcess_SortByPType | aiProcess_JoinIdenticalVertices |
+        aiProcess_FixInfacingNormals | aiProcess_GenUVCoords | aiProcess_OptimizeMeshes;
+
+    const aiScene* scene = importer.ReadFile(filePath, flags);
+
+    if (scene == nullptr) {
+        spdlog::error("Assimp Import Error (null scene): {}", importer.GetErrorString());
+        return nullptr;
     }
 
-    Assimp::Importer importer;
-    const aiScene* scene = importer.ReadFile(path, aiProcess_Triangulate);
+    if (scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE) {
+        std::string const errorString = importer.GetErrorString();
 
-    assert(scene && scene->mRootNode);
+        if (!errorString.empty()) {
+            spdlog::error("Assimp Import Error (incomplete scene): {}", importer.GetErrorString());
+            return nullptr;
+        }
+        spdlog::warn("Assimp flagged incomplete scene");
+    }
 
-    aiAnimation* aiAnimation = scene->mAnimations[0];
+    if (scene->mRootNode == nullptr) {
+        spdlog::warn("No root node for model");
+    }
 
-    std::shared_ptr<Animation> newAnimation = std::make_shared<Animation>();
-    newAnimation->duration = aiAnimation->mDuration;
-    newAnimation->ticksPerSecond = aiAnimation->mTicksPerSecond;
+    //==============================================================
+    Handle handle = generateHash(filePath);
+    auto it = assets.models.find(handle);
+    if (it != assets.models.end()) {
+        spdlog::info("Model has already been loaded {}", filePath);
+        return it->second;
+    }
+    //==============================================================
 
-    newAnimation->readHierarchyData(newAnimation->rootNode, scene->mRootNode);
-    newAnimation->readMissingBones(aiAnimation, model);
+    auto newModel = std::make_shared<Model>();
+    newModel->directory = filePath.substr(0, filePath.find_last_of("/\\"));
 
-    assets.animations[handle] = newAnimation;
+    processNode(scene->mRootNode, scene, *newModel);
 
-    return assets.animations[handle];
+    assets.models[handle] = newModel;
+
+    spdlog::info("Model loaded");
+
+    return newModel;
 }
