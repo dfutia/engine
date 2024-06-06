@@ -14,11 +14,17 @@
 Assets gAssets;
 
 void loadGameAssets() {
-    auto program = loadShader(gAssets, "Assets/Shaders/texture.vert", "Assets/Shaders/texture.frag");
+    //auto program = loadShader(gAssets, "Assets/Shaders/texture.vert", "Assets/Shaders/texture.frag");
+    //program->use();
+    //program->setUniformInt("texture1", 0);
+    //program->setUniformInt("texture2", 1);
+
+    auto program = loadShader(gAssets, "Assets/Shaders/skinned.vert", "Assets/Shaders/texture.frag");
     program->use();
     program->setUniformInt("texture1", 0);
     program->setUniformInt("texture2", 1);
 
+    loadModel(gAssets, "Assets/Meshes/Vampire/dancing_vampire.dae");
     loadModel(gAssets, "Assets/Meshes/Maria/Maria J J Ong.dae");
     loadModel(gAssets, "Assets/Meshes/Maria J J Ong.fbx");
 
@@ -179,7 +185,8 @@ std::shared_ptr<Model> loadModel(Assets& assets, const std::string& filePath) {
     }
 
     if (scene->mRootNode == nullptr) {
-        spdlog::warn("No root node for model");
+        spdlog::error("No root node for model, cannot process");
+        return nullptr;
     }
 
     //==============================================================
@@ -195,6 +202,13 @@ std::shared_ptr<Model> loadModel(Assets& assets, const std::string& filePath) {
     newModel->directory = filePath.substr(0, filePath.find_last_of("/\\"));
 
     processNode(scene->mRootNode, scene, *newModel);
+
+    if (scene->mNumAnimations == 0) {
+        spdlog::info("Model has no animations");
+    }
+    else {
+        spdlog::info("Model has animations");
+    }
 
     assets.models[handle] = newModel;
 

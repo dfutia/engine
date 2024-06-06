@@ -137,6 +137,9 @@
     <ClCompile Include="Compile\glad.c" />
     <ClCompile Include="Compile\stb.cpp" />
     <ClCompile Include="Source\Asset\asset.cpp" />
+    <ClCompile Include="Source\Graphics\animation.cpp" />
+    <ClCompile Include="Source\Graphics\animator.cpp" />
+    <ClCompile Include="Source\Graphics\bone.cpp" />
     <ClCompile Include="Source\Graphics\camera.cpp" />
     <ClCompile Include="Source\Graphics\mesh.cpp" />
     <ClCompile Include="Source\Graphics\model.cpp" />
@@ -150,6 +153,10 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Source\Asset\asset.h" />
+    <ClInclude Include="Source\Graphics\animation.h" />
+    <ClInclude Include="Source\Graphics\animator.h" />
+    <ClInclude Include="Source\Graphics\animdata.h" />
+    <ClInclude Include="Source\Graphics\bone.h" />
     <ClInclude Include="Source\Graphics\camera.h" />
     <ClInclude Include="Source\Graphics\mesh.h" />
     <ClInclude Include="Source\Graphics\model.h" />
@@ -158,6 +165,10 @@
     <ClInclude Include="Source\Graphics\texture.h" />
     <ClInclude Include="Source\Scene\scene.h" />
     <ClInclude Include="Source\Scene\sceneobject.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Assets\Meshes\Vampire\dancing_vampire.dae" />
+    <None Include="Assets\Shaders\skinned.vert" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

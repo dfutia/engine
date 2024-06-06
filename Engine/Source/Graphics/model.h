@@ -4,6 +4,7 @@
 
 #include "Graphics/mesh.h"
 #include "Graphics/texture.h"
+#include "animdata.h"
 
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
@@ -25,10 +26,20 @@ struct Model {
 	std::string directory;
 	std::vector<Mesh> meshes;
 	std::vector<Texture> textures;
+
+	std::map<std::string, BoneInfo> m_BoneInfoMap;
+	int m_BoneCounter = 0;
 };
 
 void processNode(aiNode* node, const aiScene* scene, Model& model);
 Mesh processMesh(aiMesh* mesh, const aiScene* scene, Model& model);
+
 std::vector<Texture> loadMaterialTexture(aiMaterial* mat, aiTextureType type, std::string typeName, const aiScene* scene, Model& model);
+
+void SetVertexBoneDataToDefault(Vertex& vertex);
+
+void SetVertexBoneData(Vertex& vertex, int boneID, float weight);
+
+void ExtractBoneWeightForVertices(Model& model, std::vector<Vertex>& vertices, aiMesh* mesh, const aiScene* scene);
 
 #endif 

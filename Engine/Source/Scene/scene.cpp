@@ -8,14 +8,15 @@ void addObjectToScene(Scene& scene, std::shared_ptr<SceneObject> object) {
 
 void loadScene(Scene& scene) {
     scene.camera = std::make_shared<Camera>();
-    scene.program = loadShader(gAssets, "Assets/Shaders/texture.vert", "Assets/Shaders/texture.frag");
+    //scene.program = loadShader(gAssets, "Assets/Shaders/texture.vert", "Assets/Shaders/texture.frag");
+    scene.program = loadShader(gAssets, "Assets/Shaders/skinned.vert", "Assets/Shaders/texture.frag");
 
     auto player = std::make_shared<SceneObject>();
     player->name = "Player";
-    player->model = loadModel(gAssets, "Assets/Meshes/Maria J J Ong.fbx");
+    player->model = loadModel(gAssets, "Assets/Meshes/Vampire/dancing_vampire.dae");
     player->position = glm::vec3(0.0f, 0.0f, 0.0f);
     player->rotation = glm::vec3(0.0f, 0.0f, 0.0f);
-    player->scale = glm::vec3(0.1f, 0.1f, 0.1f);
+    player->scale = glm::vec3(1.0f, 1.0f, 1.0f);
 
     addObjectToScene(scene, player);
 }

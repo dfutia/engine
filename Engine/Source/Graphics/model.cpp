@@ -28,7 +28,7 @@ Mesh processMesh(aiMesh* mesh, const aiScene* scene, Model& model) {
     // Process vertices
     for (unsigned int i = 0; i < mesh->mNumVertices; i++) {
         Vertex vertex;
-
+        SetVertexBoneDataToDefault(vertex);
         vertex.position = glm::vec3(mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z);
         vertex.color = glm::vec3(1.0f); // Default color
         if (mesh->mTextureCoords[0]) {
@@ -62,7 +62,67 @@ Mesh processMesh(aiMesh* mesh, const aiScene* scene, Model& model) {
     std::vector<Texture> heightMaps = loadMaterialTexture(material, aiTextureType_AMBIENT, "texture_height", scene, model);
     model.textures.insert(model.textures.end(), heightMaps.begin(), heightMaps.end());
 
+    ExtractBoneWeightForVertices(model, vertices, mesh, scene);
+
     return setupMesh(vertices, indices);
+}
+
+void SetVertexBoneDataToDefault(Vertex& vertex)
+{
+    for (int i = 0; i < 4; i++)
+    {
+        vertex.boneIds[i] = -1;
+        vertex.boneWeights[i] = 0.0f;
+    }
+}
+
+void SetVertexBoneData(Vertex& vertex, int boneID, float weight)
+{
+    for (int i = 0; i < 4; ++i)
+    {
+        if (vertex.boneIds[i] < 0)
+        {
+            vertex.boneWeights[i] = weight;
+            vertex.boneIds[i] = boneID;
+            break;
+        }
+    }
+}
+
+void ExtractBoneWeightForVertices(Model& model, std::vector<Vertex>& vertices, aiMesh* mesh, const aiScene* scene)
+{
+    auto& boneInfoMap = model.m_BoneInfoMap;
+    int& boneCount = model.m_BoneCounter;
+
+    for (int boneIndex = 0; boneIndex < mesh->mNumBones; ++boneIndex)
+    {
+        int boneID = -1;
+        std::string boneName = mesh->mBones[boneIndex]->mName.C_Str();
+        if (boneInfoMap.find(boneName) == boneInfoMap.end())
+        {
+            BoneInfo newBoneInfo;
+            newBoneInfo.id = boneCount;
+            newBoneInfo.offset = convertMatrixToGLMFormat(mesh->mBones[boneIndex]->mOffsetMatrix);
+            boneInfoMap[boneName] = newBoneInfo;
+            boneID = boneCount;
+            boneCount++;
+        }
+        else
+        {
+            boneID = boneInfoMap[boneName].id;
+        }
+        assert(boneID != -1);
+        auto weights = mesh->mBones[boneIndex]->mWeights;
+        int numWeights = mesh->mBones[boneIndex]->mNumWeights;
+
+        for (int weightIndex = 0; weightIndex < numWeights; ++weightIndex)
+        {
+            int vertexId = weights[weightIndex].mVertexId;
+            float weight = weights[weightIndex].mWeight;
+            assert(vertexId <= vertices.size());
+            SetVertexBoneData(vertices[vertexId], boneID, weight);
+        }
+    }
 }
 
 // https://chatgpt.com/g/g-3s6SJ5V7S-askthecode-git-companion/c/7ce512cd-ffa7-43f6-97ab-fdb33385d32c?oauth_success=true

@@ -14,9 +14,9 @@ struct Vertex {
 	glm::vec3 color;
 	glm::vec2 texCoords;
 
-	// Animatin data
-	int boneIds[4];
-	float boneWeights[4];
+	// Animation data
+	int boneIds[4] = { 0, 0, 0, 0 };
+	float boneWeights[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
 };
 
 struct Mesh {

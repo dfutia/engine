@@ -3,6 +3,8 @@
 #include "Scene/scene.h"
 #include "Asset/asset.h"
 #include "Graphics/shader.h"
+#include "animation.h"
+#include "animator.h"
 
 #include <glm/mat4x4.hpp>
 #include <glm/trigonometric.hpp>
@@ -23,6 +25,11 @@ void renderScene(Scene& scene, float deltaTime) {
 
     // Render objects in the scene
     for (auto object : scene.objects) {
+        static Animation danceAnimation("Assets/Meshes/Vampire/dancing_vampire.dae", object->model.get());
+        static Animator animator(&danceAnimation);
+
+        animator.UpdateAnimation(deltaTime);
+
         // Local Space
         glm::vec3 position = object->position;
         glm::vec3 rotation = object->rotation;
@@ -70,6 +77,11 @@ void renderScene(Scene& scene, float deltaTime) {
             glBindVertexArray(mesh.vao);
             glDrawElements(GL_TRIANGLES, mesh.indices.size(), GL_UNSIGNED_INT, 0);
             glBindVertexArray(0);
+        }
+
+        auto transforms = animator.GetFinalBoneMatrices();
+        for (int i = 0; i < transforms.size(); ++i) {
+            scene.program->setUniform("finalBonesMatrices[" + std::to_string(i) + "]", transforms[i]);
         }
     }
 }
