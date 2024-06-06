@@ -25,7 +25,7 @@ void renderScene(Scene& scene, float deltaTime) {
 
     // Render objects in the scene
     for (auto object : scene.objects) {
-        static Animation danceAnimation("Assets/Meshes/Vampire/dancing_vampire.dae", object->model.get());
+        static Animation danceAnimation("Assets/Animations/ReactionNoSkin.fbx", object->model.get());
         static Animator animator(&danceAnimation);
 
         animator.UpdateAnimation(deltaTime);

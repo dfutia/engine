@@ -24,9 +24,8 @@ void loadGameAssets() {
     program->setUniformInt("texture1", 0);
     program->setUniformInt("texture2", 1);
 
-    loadModel(gAssets, "Assets/Meshes/Vampire/dancing_vampire.dae");
-    loadModel(gAssets, "Assets/Meshes/Maria/Maria J J Ong.dae");
-    loadModel(gAssets, "Assets/Meshes/Maria J J Ong.fbx");
+    loadModel(gAssets, "Assets/Meshes/Mutant.fbx");
+    loadModel(gAssets, "Assets/Meshes/Mutant/Mutant.dae");
 
     loadTexture(gAssets, "Assets/Textures/container.jpg", "texture_diffuse");
     loadTexture(gAssets, "Assets/Textures/awesomeface.png", "texture_diffuse");
