@@ -13,7 +13,7 @@ void loadScene(Scene& scene) {
 
     auto player = std::make_shared<SceneObject>();
     player->name = "Player";
-    player->model = loadModel(gAssets, "Assets/Meshes/Mutant.fbx");
+    player->model = loadModel(gAssets, "Assets/Meshes/Maria/Maria J J Ong.dae");
     player->position = glm::vec3(0.0f, 0.0f, 0.0f);
     player->rotation = glm::vec3(0.0f, 0.0f, 0.0f);
     player->scale = glm::vec3(1.0f, 1.0f, 1.0f);
