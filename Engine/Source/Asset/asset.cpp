@@ -1,4 +1,5 @@
 #include "Asset/asset.h"
+#include "Core/file.h"
 
 #include <assimp/Logger.hpp>
 #include <assimp/DefaultLogger.hpp>
@@ -14,11 +15,6 @@
 Assets gAssets;
 
 void loadGameAssets() {
-    //auto program = loadShader(gAssets, "Assets/Shaders/texture.vert", "Assets/Shaders/texture.frag");
-    //program->use();
-    //program->setUniformInt("texture1", 0);
-    //program->setUniformInt("texture2", 1);
-
     auto program = loadShader(gAssets, "Assets/Shaders/skinned.vert", "Assets/Shaders/texture.frag");
     program->use();
     program->setUniformInt("texture1", 0);
@@ -31,22 +27,12 @@ void loadGameAssets() {
     loadTexture(gAssets, "Assets/Textures/awesomeface.png", "texture_diffuse");
 }
 
-std::string loadShaderSource(const std::string& filepath) {
-    std::ifstream file(filepath);
-
-    if (!file.is_open()) {
-        std::cerr << "Failed to open shader file: " << filepath << std::endl;
-        return "";
-    }
-
-    std::stringstream buffer;
-    buffer << file.rdbuf();
-    file.close();
-
-    return buffer.str();
+size_t generateHash(const std::string& path) {
+    std::hash<std::string> hasher;
+    return hasher(path);
 }
 
-size_t generateCombinedHash(const std::string& path1, const std::string& path2) {
+size_t generateHash(const std::string& path1, const std::string& path2) {
     auto hasher = std::hash<std::string>{};
     auto hash1 = hasher(path1);
     auto hash2 = hasher(path2);
@@ -54,65 +40,45 @@ size_t generateCombinedHash(const std::string& path1, const std::string& path2) 
     return hash1 ^ (hash2 << 1);
 }
 
-size_t generateHash(const std::string& key) {
-    std::hash<std::string> hasher;
-    return hasher(key);
-}
-
-std::shared_ptr<ShaderProgram> loadShader(Assets& assets, const std::string& vertexPath, const std::string& fragmentPath) {
-    Handle handle = generateCombinedHash(vertexPath, fragmentPath);
-
+ShaderProgram* loadShader(Assets& assets, const std::string& vertexPath, const std::string& fragmentPath) {
+    Handle handle = generateHash(vertexPath, fragmentPath);
     auto it = assets.shaders.find(handle);
     if (it != assets.shaders.end()) {
-        return it->second; 
+        return it->second.get(); 
     }
-
-    std::string vertexCode;
-    std::string fragmentCode;
-    std::ifstream vShaderFile;
-    std::ifstream fShaderFile;
-
-    vShaderFile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
-    fShaderFile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
 
     try {
         // Open files and read into streams
-        vShaderFile.open(vertexPath);
-        fShaderFile.open(fragmentPath);
-        std::stringstream vShaderStream, fShaderStream;
-        vShaderStream << vShaderFile.rdbuf();
-        fShaderStream << fShaderFile.rdbuf();
-        vShaderFile.close();
-        fShaderFile.close();
-        vertexCode = vShaderStream.str();
-        fragmentCode = fShaderStream.str();
+        std::string vertexCode = readFileToString(vertexPath);
+        std::string fragmentCode = readFileToString(fragmentPath);
 
         // Create and compile shaders
         auto vertexShader = std::make_shared<Shader>(vertexCode, GL_VERTEX_SHADER);
         auto fragmentShader = std::make_shared<Shader>(fragmentCode, GL_FRAGMENT_SHADER);
 
         // Link shaders into a program
-        auto program = std::make_shared<ShaderProgram>();
+        auto program = std::make_unique<ShaderProgram>();
         program->attach(vertexShader);
         program->attach(fragmentShader);
         program->link();
 
-        assets.shaders[handle] = program;
-        return program;
+        assets.shaders[handle] = std::move(program);
+
+        return assets.shaders[handle].get();
     }
     catch (const std::exception& e) {
-        //spdlog::error("ERROR::SHADER::FILE_NOT_SUCCESSFULLY_READ: {}", e.what());
+        spdlog::error("ERROR::SHADER::FILE_NOT_SUCCESSFULLY_READ: {}", e.what());
         return nullptr; // Return a nullptr to indicate failure
     }
 }
 
-std::shared_ptr<Texture> loadTexture(Assets& assets, const std::string& filePath, const std::string& type) {
-    Handle handle = generateHash(filePath);
+Texture* loadTexture(Assets& assets, const std::string& filePath, const std::string& type) {
 
+    Handle handle = generateHash(filePath);
     auto it = assets.textures.find(handle);
     if (it != assets.textures.end()) {
         spdlog::warn("Texture has already been loaded: {}", filePath);
-        return it->second;
+        return it->second.get();
     }
 
     unsigned int textureID;
@@ -149,17 +115,25 @@ std::shared_ptr<Texture> loadTexture(Assets& assets, const std::string& filePath
         return nullptr;
     }
 
-    auto texture = std::make_shared<Texture>();
+    auto texture = std::make_unique<Texture>();
     texture->id = textureID;
     texture->type = type;
-    assets.textures[handle] = texture;
+
+    assets.textures[handle] = std::move(texture);
 
     spdlog::info("Texture loaded");
 
-    return texture;
+    return assets.textures[handle].get();
 }
 
-std::shared_ptr<Model> loadModel(Assets& assets, const std::string& filePath) {
+Model* loadModel(Assets& assets, const std::string& filePath) {
+    Handle handle = generateHash(filePath);
+    auto it = assets.models.find(handle);
+    if (it != assets.models.end()) {
+        spdlog::info("Model has already been loaded {}", filePath);
+        return it->second.get();
+    }
+
     Assimp::Importer importer;
     importer.SetPropertyBool(AI_CONFIG_IMPORT_FBX_PRESERVE_PIVOTS, false);
 
@@ -188,30 +162,13 @@ std::shared_ptr<Model> loadModel(Assets& assets, const std::string& filePath) {
         return nullptr;
     }
 
-    //==============================================================
-    Handle handle = generateHash(filePath);
-    auto it = assets.models.find(handle);
-    if (it != assets.models.end()) {
-        spdlog::info("Model has already been loaded {}", filePath);
-        return it->second;
-    }
-    //==============================================================
+    auto model = std::make_unique<Model>();
+    model->directory = filePath.substr(0, filePath.find_last_of("/\\"));
+    processNode(scene->mRootNode, scene, *model);
 
-    auto newModel = std::make_shared<Model>();
-    newModel->directory = filePath.substr(0, filePath.find_last_of("/\\"));
-
-    processNode(scene->mRootNode, scene, *newModel);
-
-    if (scene->mNumAnimations == 0) {
-        spdlog::info("Model has no animations");
-    }
-    else {
-        spdlog::info("Model has animations");
-    }
-
-    assets.models[handle] = newModel;
+    assets.models[handle] = std::move(model);
 
     spdlog::info("Model loaded");
 
-    return newModel;
+    return assets.models[handle].get();
 }

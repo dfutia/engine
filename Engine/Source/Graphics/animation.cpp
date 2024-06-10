@@ -7,23 +7,24 @@
 #include <assimp/Importer.hpp>
 #include <assimp/postprocess.h>
 
-Animation::Animation(const std::string& animationPath, Model* model)
-{
+Animation::Animation(const std::string& animationPath, Model* model) {
 	Assimp::Importer importer;
-	importer.SetPropertyBool(AI_CONFIG_IMPORT_FBX_PRESERVE_PIVOTS, false);
 	const aiScene* scene = importer.ReadFile(animationPath, aiProcess_Triangulate);
+
 	assert(scene && scene->mRootNode);
+
 	auto animation = scene->mAnimations[0];
 	m_Duration = animation->mDuration;
 	m_TicksPerSecond = animation->mTicksPerSecond;
+
 	aiMatrix4x4 globalTransformation = scene->mRootNode->mTransformation;
 	globalTransformation = globalTransformation.Inverse();
-	ReadHierarchyData(m_RootNode, scene->mRootNode);
-	ReadMissingBones(animation, *model);
+
+	readHierarchyData(m_RootNode, scene->mRootNode);
+	readMissingBones(animation, *model);
 }
 
-Bone* Animation::FindBone(const std::string& name)
-{
+Bone* Animation::findBone(const std::string& name) {
 	auto iter = std::find_if(m_Bones.begin(), m_Bones.end(),
 		[&](const Bone& Bone)
 		{
@@ -34,7 +35,7 @@ Bone* Animation::FindBone(const std::string& name)
 	else return &(*iter);
 }
 
-void Animation::ReadMissingBones(const aiAnimation* animation, Model& model)
+void Animation::readMissingBones(const aiAnimation* animation, Model& model)
 {
 	int size = animation->mNumChannels;
 
@@ -59,7 +60,7 @@ void Animation::ReadMissingBones(const aiAnimation* animation, Model& model)
 	m_BoneInfoMap = boneInfoMap;
 }
 
-void Animation::ReadHierarchyData(AssimpNodeData& dest, const aiNode* src)
+void Animation::readHierarchyData(AssimpNodeData& dest, const aiNode* src)
 {
 	assert(src);
 
@@ -70,7 +71,7 @@ void Animation::ReadHierarchyData(AssimpNodeData& dest, const aiNode* src)
 	for (int i = 0; i < src->mNumChildren; i++)
 	{
 		AssimpNodeData newData;
-		ReadHierarchyData(newData, src->mChildren[i]);
+		readHierarchyData(newData, src->mChildren[i]);
 		dest.children.push_back(newData);
 	}
 }

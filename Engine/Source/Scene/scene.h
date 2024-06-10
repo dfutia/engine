@@ -13,7 +13,7 @@
 struct Scene {
 	std::vector<std::shared_ptr<SceneObject>> objects;
 	std::shared_ptr<Camera> camera;
-    std::shared_ptr<ShaderProgram> program;
+    ShaderProgram* program;
 };
 
 void addObjectToScene(Scene& scene, std::shared_ptr<SceneObject> object);

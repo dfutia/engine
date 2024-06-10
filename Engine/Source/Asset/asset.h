@@ -15,23 +15,19 @@
 using Handle = size_t;
 
 struct Assets {
-    std::unordered_map<Handle, std::shared_ptr<Texture>> textures;
-    std::unordered_map<Handle, std::shared_ptr<Model>> models;
-    std::unordered_map<Handle, std::shared_ptr<ShaderProgram>> shaders;
+    std::unordered_map<Handle, std::unique_ptr<Texture>> textures;
+    std::unordered_map<Handle, std::unique_ptr<Model>> models;
+    std::unordered_map<Handle, std::unique_ptr<ShaderProgram>> shaders;
 };
 
 void loadGameAssets();
 
-Handle generateCombinedHash(const std::string& path1, const std::string& path2);
-Handle generateHash(const std::string& key);
+Handle generateHash(const std::string& path);
+Handle generateHash(const std::string& path1, const std::string& path2);
 
-std::string loadShaderSource(const std::string& filepath);
-
-std::shared_ptr<ShaderProgram> loadShader(Assets& assets, const std::string& vertexPath, const std::string& fragmentPath);
-
-std::shared_ptr<Texture> loadTexture(Assets& assets, const std::string& filePath, const std::string& type);
-
-std::shared_ptr<Model> loadModel(Assets& assets, const std::string& filePath);
+ShaderProgram* loadShader(Assets& assets, const std::string& vertexPath, const std::string& fragmentPath);
+Texture* loadTexture(Assets& assets, const std::string& filePath, const std::string& type);
+Model* loadModel(Assets& assets, const std::string& filePath);
 
 extern Assets gAssets;
 

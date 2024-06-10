@@ -16,7 +16,7 @@ struct SceneObject {
     glm::vec3 position;
     glm::vec3 rotation;
     glm::vec3 scale;
-    std::shared_ptr<Model> model;
+    Model* model;
 };
 
 void printObject(SceneObject& object);

@@ -137,6 +137,7 @@
     <ClCompile Include="Compile\glad.c" />
     <ClCompile Include="Compile\stb.cpp" />
     <ClCompile Include="Source\Asset\asset.cpp" />
+    <ClCompile Include="Source\Core\file.cpp" />
     <ClCompile Include="Source\Graphics\animation.cpp" />
     <ClCompile Include="Source\Graphics\animator.cpp" />
     <ClCompile Include="Source\Graphics\bone.cpp" />
@@ -153,6 +154,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Source\Asset\asset.h" />
+    <ClInclude Include="Source\Core\file.h" />
     <ClInclude Include="Source\Graphics\animation.h" />
     <ClInclude Include="Source\Graphics\animator.h" />
     <ClInclude Include="Source\Graphics\animdata.h" />
