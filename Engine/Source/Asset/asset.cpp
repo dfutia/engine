@@ -20,9 +20,6 @@ void loadGameAssets() {
     program->setUniformInt("texture1", 0);
     program->setUniformInt("texture2", 1);
 
-    loadModel(gAssets, "Assets/Meshes/Mutant.fbx");
-    loadModel(gAssets, "Assets/Meshes/Mutant/Mutant.dae");
-
     loadTexture(gAssets, "Assets/Textures/container.jpg", "texture_diffuse");
     loadTexture(gAssets, "Assets/Textures/awesomeface.png", "texture_diffuse");
 }

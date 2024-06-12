@@ -39,6 +39,7 @@ private:
 	std::vector<Bone> m_Bones;
 	AssimpNodeData m_RootNode;
 	std::map<std::string, BoneInfo> m_BoneInfoMap;
+	int m_BoneCounter = 0;
 
 	void readMissingBones(const aiAnimation* animation, Model& model);
 	void readHierarchyData(AssimpNodeData& dest, const aiNode* src);

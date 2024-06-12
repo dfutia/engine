@@ -35,8 +35,7 @@ Bone* Animation::findBone(const std::string& name) {
 	else return &(*iter);
 }
 
-void Animation::readMissingBones(const aiAnimation* animation, Model& model)
-{
+void Animation::readMissingBones(const aiAnimation* animation, Model& model) {
 	int size = animation->mNumChannels;
 
 	auto& boneInfoMap = model.m_BoneInfoMap;//getting m_BoneInfoMap from Model class
