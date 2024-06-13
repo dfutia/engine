@@ -28,8 +28,12 @@ void Animator::ResolveBoneMappings(Animation* animation, Model* model) {
 		std::string boneName = bone.GetBoneName();
 
 		if (boneInfoMap.find(boneName) == boneInfoMap.end()) {
+			std::cerr << "Warning: No matching bone found for " << boneName << "\n";
 			boneInfoMap[boneName].id = boneCount;
 			boneCount++;
+		}
+		else {
+			std::cerr << "Mapping bone " << boneName << " to ID " << boneInfoMap[boneName].id << "\n";
 		}
 
 		m_BoneMapping[boneName] = boneInfoMap[boneName].id;
@@ -52,6 +56,7 @@ void Animator::PlayAnimation(Animation* pAnimation, Model* model)
 {
 	m_CurrentAnimation = pAnimation;
 	m_CurrentTime = 0.0f;
+	ResolveBoneMappings(pAnimation, model);
 }
 
 void Animator::CalculateBoneTransform(const AssimpNodeData* node, glm::mat4 parentTransform)

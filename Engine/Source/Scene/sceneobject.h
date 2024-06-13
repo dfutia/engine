@@ -17,6 +17,7 @@ struct SceneObject {
     glm::vec3 rotation;
     glm::vec3 scale;
     Model* model;
+    Animator* animator;
 };
 
 void printObject(SceneObject& object);

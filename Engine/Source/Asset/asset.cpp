@@ -20,6 +20,11 @@ void loadGameAssets() {
     program->setUniformInt("texture1", 0);
     program->setUniformInt("texture2", 1);
 
+    loadModel(gAssets, "Assets/Meshes/Maria J J Ong.fbx");
+
+    loadAnimation(gAssets, "Assets/Animations/Twist Dance.fbx");
+    loadAnimation(gAssets, "Assets/Animations/Dying (1).fbx");
+
     loadTexture(gAssets, "Assets/Textures/container.jpg", "texture_diffuse");
     loadTexture(gAssets, "Assets/Textures/awesomeface.png", "texture_diffuse");
 }
@@ -168,4 +173,34 @@ Model* loadModel(Assets& assets, const std::string& filePath) {
     spdlog::info("Model loaded");
 
     return assets.models[handle].get();
+}
+
+Animation* loadAnimation(Assets& assets, const std::string& filePath) {
+    Handle handle = generateHash(filePath);
+    auto it = assets.animations.find(handle);
+    if (it != assets.animations.end()) {
+        spdlog::info("Animation has already been loaded {}", filePath);
+        return it->second.get();
+    }
+
+    Assimp::Importer importer;
+    importer.SetPropertyBool(AI_CONFIG_IMPORT_FBX_PRESERVE_PIVOTS, false);
+    const aiScene* scene = importer.ReadFile(filePath, aiProcess_Triangulate);
+    assert(scene && scene->mRootNode);
+
+    auto animation = std::make_unique<Animation>();
+    animation->m_Duration = scene->mAnimations[0]->mDuration;
+    animation->m_TicksPerSecond = scene->mAnimations[0]->mTicksPerSecond;
+
+    aiMatrix4x4 globalTransformation = scene->mRootNode->mTransformation;
+    globalTransformation = globalTransformation.Inverse();
+
+    animation->readHierarchyData(animation->m_RootNode, scene->mRootNode);
+    animation->readMissingBones(scene->mAnimations[0]);
+
+    assets.animations[handle] = std::move(animation);
+
+    spdlog::info("Animation loaded");
+
+    return assets.animations[handle].get();
 }

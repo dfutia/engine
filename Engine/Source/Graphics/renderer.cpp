@@ -25,11 +25,7 @@ void renderScene(Scene& scene, float deltaTime) {
 
     // Render objects in the scene
     for (auto object : scene.objects) {
-        static Animation danceAnimation("Assets/Animations/Twist Dance.fbx");
-        static Animation reactAnimation("Assets/Animations/Dying (1).fbx");
-        static Animator animator(&reactAnimation, object->model);
-
-        animator.UpdateAnimation(deltaTime);
+        object->animator->UpdateAnimation(deltaTime);
 
         // Local Space
         glm::vec3 position = object->position;
@@ -80,7 +76,7 @@ void renderScene(Scene& scene, float deltaTime) {
             glBindVertexArray(0);
         }
 
-        auto transforms = animator.GetFinalBoneMatrices();
+        auto transforms = object->animator->GetFinalBoneMatrices();
         for (int i = 0; i < transforms.size(); ++i) {
             scene.program->setUniform("finalBonesMatrices[" + std::to_string(i) + "]", transforms[i]);
         }

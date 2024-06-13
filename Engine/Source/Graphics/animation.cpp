@@ -7,22 +7,6 @@
 #include <assimp/Importer.hpp>
 #include <assimp/postprocess.h>
 
-Animation::Animation(const std::string& animationPath) {
-    Assimp::Importer importer;
-    importer.SetPropertyBool(AI_CONFIG_IMPORT_FBX_PRESERVE_PIVOTS, false);
-    const aiScene* scene = importer.ReadFile(animationPath, aiProcess_Triangulate);
-    assert(scene && scene->mRootNode);
-
-    auto animation = scene->mAnimations[0];
-    m_Duration = animation->mDuration;
-    m_TicksPerSecond = animation->mTicksPerSecond;
-
-    aiMatrix4x4 globalTransformation = scene->mRootNode->mTransformation;
-    globalTransformation = globalTransformation.Inverse();
-    readHierarchyData(m_RootNode, scene->mRootNode);
-    readMissingBones(animation);
-}
-
 Bone* Animation::findBone(const std::string& name) {
     auto iter = std::find_if(m_Bones.begin(), m_Bones.end(),
         [&](const Bone& bone) {
@@ -54,4 +38,3 @@ void Animation::readHierarchyData(AssimpNodeData& dest, const aiNode* src) {
         dest.children.push_back(newData);
     }
 }
-

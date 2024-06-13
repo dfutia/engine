@@ -27,6 +27,7 @@ public:
 
 	std::vector<glm::mat4> GetFinalBoneMatrices();
 private:
+	Model* model;
 	std::vector<glm::mat4> m_FinalBoneMatrices;
 	Animation* m_CurrentAnimation;
 	std::map<std::string, int> m_BoneMapping;
