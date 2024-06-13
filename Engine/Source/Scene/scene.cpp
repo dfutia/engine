@@ -16,7 +16,7 @@ void loadScene(Scene& scene) {
     player->model = loadModel(gAssets, "Assets/Meshes/Maria J J Ong.fbx");
     player->position = glm::vec3(0.0f, 0.0f, 0.0f);
     player->rotation = glm::vec3(0.0f, 0.0f, 0.0f);
-    player->scale = glm::vec3(1.0f, 1.0f, 1.0f);
+    player->scale = glm::vec3(0.1f);
 
     addObjectToScene(scene, player);
 }

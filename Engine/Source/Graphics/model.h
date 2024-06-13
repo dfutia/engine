@@ -27,7 +27,7 @@ struct Model {
 	std::vector<Mesh> meshes;
 	std::vector<Texture> textures;
 
-	std::map<std::string, BoneInfo> m_BoneInfoMap;
+	std::map<std::string, BoneInfo> m_BoneInfoMap; // (skeleton)
 	int m_BoneCounter = 0;
 };
 

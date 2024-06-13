@@ -5,18 +5,23 @@
 #include <glm/glm.hpp>
 
 #include <vector>
+#include <map>
+#include <string>
 
+struct Model;
 class Animation;
 struct AssimpNodeData;
 
 class Animator
 {
 public:
-	Animator(Animation* animation);
+	Animator(Animation* animation, Model* model);
+
+	void ResolveBoneMappings(Animation* animation, Model* model);
 
 	void UpdateAnimation(float dt);
 
-	void PlayAnimation(Animation* pAnimation);
+	void PlayAnimation(Animation* pAnimation, Model* model);
 
 	void CalculateBoneTransform(const AssimpNodeData* node, glm::mat4 parentTransform);
 
@@ -24,9 +29,8 @@ public:
 private:
 	std::vector<glm::mat4> m_FinalBoneMatrices;
 	Animation* m_CurrentAnimation;
+	std::map<std::string, int> m_BoneMapping;
 	float m_CurrentTime;
-	float m_DeltaTime;
-
 };
 
 #endif 

@@ -15,8 +15,8 @@ struct Vertex {
 	glm::vec2 texCoords;
 
 	// Animation data
-	int boneIds[4] = { 0, 0, 0, 0 };
-	float boneWeights[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
+	int boneIds[4] = { 0, 0, 0, 0 }; // (skinning)
+	float boneWeights[4] = { 0.0f, 0.0f, 0.0f, 0.0f }; // (skinning)
 };
 
 struct Mesh {

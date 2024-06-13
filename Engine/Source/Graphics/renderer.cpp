@@ -25,8 +25,9 @@ void renderScene(Scene& scene, float deltaTime) {
 
     // Render objects in the scene
     for (auto object : scene.objects) {
-        static Animation danceAnimation("Assets/Animations/ReactionNoSkin.fbx", object->model);
-        static Animator animator(&danceAnimation);
+        static Animation danceAnimation("Assets/Animations/Twist Dance.fbx");
+        static Animation reactAnimation("Assets/Animations/Dying (1).fbx");
+        static Animator animator(&reactAnimation, object->model);
 
         animator.UpdateAnimation(deltaTime);
 

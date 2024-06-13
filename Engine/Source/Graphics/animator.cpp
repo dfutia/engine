@@ -2,21 +2,44 @@
 #include "animation.h"
 #include "bone.h"
 #include "animdata.h"
+#include "model.h"
 
-Animator::Animator(Animation* animation)
+#include <iostream>
+
+Animator::Animator(Animation* animation, Model* model)
 {
 	m_CurrentTime = 0.0;
 	m_CurrentAnimation = animation;
 
-	m_FinalBoneMatrices.reserve(100);
+	m_FinalBoneMatrices.reserve(200);
 
-	for (int i = 0; i < 100; i++)
+	for (int i = 0; i < 200; i++)
 		m_FinalBoneMatrices.push_back(glm::mat4(1.0f));
+
+	ResolveBoneMappings(animation, model);
+}
+
+void Animator::ResolveBoneMappings(Animation* animation, Model* model) {
+	auto& boneInfoMap = model->m_BoneInfoMap;
+	int& boneCount = model->m_BoneCounter;
+
+	for (int i = 0; i < animation->getBones().size(); i++) {
+		Bone& bone = animation->getBones()[i];
+		std::string boneName = bone.GetBoneName();
+
+		if (boneInfoMap.find(boneName) == boneInfoMap.end()) {
+			boneInfoMap[boneName].id = boneCount;
+			boneCount++;
+		}
+
+		m_BoneMapping[boneName] = boneInfoMap[boneName].id;
+	}
+
+	animation->setBoneIDMap(boneInfoMap);
 }
 
 void Animator::UpdateAnimation(float dt)
 {
-	m_DeltaTime = dt;
 	if (m_CurrentAnimation)
 	{
 		m_CurrentTime += m_CurrentAnimation->getTicksPerSecond() * dt;
@@ -25,7 +48,7 @@ void Animator::UpdateAnimation(float dt)
 	}
 }
 
-void Animator::PlayAnimation(Animation* pAnimation)
+void Animator::PlayAnimation(Animation* pAnimation, Model* model)
 {
 	m_CurrentAnimation = pAnimation;
 	m_CurrentTime = 0.0f;
