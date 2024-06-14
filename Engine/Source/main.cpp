@@ -1,3 +1,4 @@
+#include "Core/time.h"
 #include "Asset/asset.h"
 #include "Scene/scene.h"
 #include "Graphics/renderer.h"
@@ -16,7 +17,8 @@ struct App {
 };
 
 void initWindow(App& app, const char* title, int width, int height, bool fullscreen) {
-    if (SDL_Init(SDL_INIT_EVERYTHING) != 0) {
+    const Uint32 sdlFlags = (SDL_INIT_TIMER | SDL_INIT_EVENTS | SDL_INIT_AUDIO);
+    if (SDL_Init(sdlFlags) != 0) {
         spdlog::error("SDL Init {}", SDL_GetError());
     }
 
@@ -56,6 +58,14 @@ std::vector<SDL_Event>& getFrameEvents() {
     return frameEvents;
 }
 
+float getDeltaTime() {
+    static Uint32 lastTime = 0;
+    Uint32 currentTime = SDL_GetTicks();
+    float deltaTime = (currentTime - lastTime) / 1000.0f;
+    lastTime = currentTime;
+    return deltaTime;
+}
+
 int main(int argc, char* argv[]) {
     App app;
     Scene scene;
@@ -69,12 +79,29 @@ int main(int argc, char* argv[]) {
     loadGameAssets();
     loadScene(scene);
 
-    Uint32 lastTime = SDL_GetTicks(), currentTime;
+    Time time;
+    time.initialize();
+
+    Timer timer;
+
+    uint32_t lastTick = 0, currentTick;
+    auto lastLogTime = std::chrono::high_resolution_clock::now();
 
     bool running = true;
+
     while (running) {
-        currentTime = SDL_GetTicks();
-        float deltaTime = (currentTime - lastTime) / 1000.0f; 
+        currentTick = time.tick();
+        if (currentTick != lastTick) {
+            auto now = std::chrono::high_resolution_clock::now();
+            std::chrono::duration<double> elapsed = now - lastLogTime;
+            spdlog::info("Tick. Time since last tick: {:.6f} seconds", elapsed.count());
+            lastLogTime = now;
+            lastTick = currentTick;
+        }
+
+        float delta = timer.getDelta();
+        timer.reset();
+        spdlog::info("Delta: {:.6f}", delta);
 
         SDL_Event event;
         while (SDL_PollEvent(&event)) {
@@ -86,20 +113,22 @@ int main(int argc, char* argv[]) {
             }
         }
 
-        scene.camera->handleEvent(getFrameEvents(), deltaTime);
+        scene.camera->handleEvent(getFrameEvents(), delta);
 
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glViewport(0, 0, 1280, 720);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        renderScene(scene, deltaTime);
+        renderScene(scene, delta);
 
-        lastTime = currentTime;
         getFrameEvents().clear();
         SDL_GL_SwapWindow(app.m_window);
+
+        time.wait(1); // Reduce CPU usage
     }
 
     shutdown(app);
 
     return 0;
 }
+
